@@ -6,7 +6,7 @@ from time import sleep
 from multiprocessing import Process,Pipe
 from threading import Thread
 from slacksocket import SlackSocket
-from actions Noop,all_actions
+from actions import Noop,all_actions
 
 log = logging.getLogger('slackbot')
 
