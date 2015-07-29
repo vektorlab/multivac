@@ -1,8 +1,9 @@
 from setuptools import setup
-from slackbot import __version__
+
+exec(open('slackbot/version.py').read())
 
 setup(name='slackbot',
-      version=__version__,
+      version=version,
       packages=['slackbot'],
       description='Slack RTM Chatops Bot',
       author='Bradley Cicenas',
