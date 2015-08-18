@@ -1,9 +1,13 @@
 import logging
 import yaml
+import subprocess
+import fcntl
+import shlex
+import os
+
 from time import sleep
-from datetime import datetime
 from redis import StrictRedis
-from multiprocessing import Process,Pipe
+from threading import Thread
 
 from util import unix_time
 from models import JobsDB
@@ -30,15 +34,17 @@ class Manager(object):
             #collect ended processes
             collected = []
             for job_id in self.procs:
-                proc,pipe = self.procs[job_id]
-                if not proc.is_alive():
-                    self.db.append_log(job_id, pipe.recv())
+                exitcode = self.procs[job_id].returncode
+                if exitcode and exitcode == 0:
                     self.db.update_job(job_id, 'status', 'completed')
                     collected.append(job_id)
-                    log.info('Collected finished job %s' % (job_id))
+                if exitcode and exitcode != 0:
+                    self.db.update_job(job_id, 'status', 'failed')
+                    collected.append(job_id)
 
-            for i in collected:
-                del self.procs[i]
+            for j in collected:
+                log.info('Collected ended job %s' % j)
+                del self.procs[j]
 
             sleep(1)
 
@@ -59,16 +65,26 @@ class Manager(object):
 
     def _start_job(self, job):
         job_id = job['id']
-
-        parent_conn, child_conn = Pipe()
-        proc = Process(target=self._worker,args=(job, child_conn))
-        self.procs[job_id] = (proc, parent_conn)
-
-        now = unix_time(datetime.utcnow())
-        self.db.update_job(job_id, 'start_time', now)
         self.db.update_job(job_id, 'status', 'running')
 
-        proc.start()
+        if job['args']:
+            cmd = shlex.split(job['cmd'] + ' ' + job['args'])
+        else:
+            cmd = job['cmd']
+
+        proc = subprocess.Popen(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE)
+
+        self.procs[job_id] = proc
+
+        thread = Thread(
+                target=self._log_worker,
+                args=[job_id, proc.stdout, proc.stderr])
+        thread.daemon = True
+        thread.start()
+        thread.join(timeout=1)
 
     def _worker(self, job, conn):
         """ Worker to run jobs """
@@ -79,3 +95,26 @@ class Manager(object):
         sleep(5)
 
         return
+
+    def _log_worker(self, job_id, stdout, stderr):
+        while True:
+            output = self._read(stdout).strip()
+            error = self._read(stderr).strip()
+            if output:
+                self.db.append_log(job_id, output)
+                log.debug('%s-STDOUT: %s' % (job_id,output))
+            if error:
+                self.db.append_log(job_id, error)
+                log.debug('%s-STDOUT: %s' % (job_id,error))
+
+    def _read(self, pipe):
+        """
+        Non-blocking method for reading fd
+        """
+        fd = pipe.fileno()
+        fl = fcntl.fcntl(fd, fcntl.F_GETFL)
+        fcntl.fcntl(fd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
+        try:
+            return pipe.read()
+        except:
+            return ""

@@ -1,6 +1,6 @@
 from redis import StrictRedis
+from datetime import datetime
 from uuid import uuid4
-import shlex
 
 class JobsDB(object):
     job_prefix = 'multivac_job'
@@ -24,10 +24,6 @@ class JobsDB(object):
         if not job:
             return None
 
-        if args:
-            job['cmd'] +=  ' ' + args
-
-        job['cmd'] = shlex.split(job['cmd'])
         job['id'] = str(uuid4().hex)
         job['args'] = args
 
@@ -63,8 +59,12 @@ class JobsDB(object):
         logs = self.redis.lrange(self._logkey(job_id),0,-1)
         return [ l for l in reversed(logs) ]
 
-    def append_log(self, job_id, output):
-        self.redis.lpush(self._logkey(job_id), output)
+    def append_log(self, job_id, line):
+        self.redis.lpush(self._logkey(job_id), self._append_ts(line))
+
+    def _append_ts(self, msg):
+        ts = datetime.utcnow().strftime('%a %b %d %H:%M:%S %Y')
+        return '[%s] %s' % (ts,msg)
 
     #######
     # Action Methods 
