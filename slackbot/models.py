@@ -27,10 +27,10 @@ class JobsDB(object):
         job['id'] = str(uuid4().hex)
         job['args'] = args
 
-        if job['confirm_required']:
-            job['status'] = 'ready'
-        else:
+        if job['confirm_required'] == "True":
             job['status'] = 'pending'
+        else:
+            job['status'] = 'ready'
 
         self.redis.hmset(self._jobkey(job['id']), job)
 
@@ -81,7 +81,12 @@ class JobsDB(object):
         self.redis.hmset(self._actionkey(action['name']), action)
 
     def purge_actions(self):
-        [ self.redis.delete(k['name']) for k in self.get_actions() ]
+        [ self.redis.delete(k) for k in \
+          self.redis.keys(pattern=self._actionkey('*')) ]
+
+    #######
+    # Keyname Methods 
+    #######
 
     def _logkey(self,id):
         return self.log_prefix + ':' + id

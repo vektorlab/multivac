@@ -11,13 +11,35 @@ class Hello(Resource):
     def post(self):
         return {},403
 
+class Confirm(Resource):
+    def get(self):
+        return {},403
+
+    def post(self):
+        args = self._parse()
+        db = app.config['db']
+
+        job = db.get_job(args['id'])
+        if not job:
+            return { 'error': 'no such job id' },400
+        if job['status'] != 'pending':
+            return { 'error': 'job not awaiting confirm' },400
+
+        db.update_job(args['id'], 'status', 'ready')
+
+        return { 'ok': True }
+
+    def _parse(self):
+        parser = reqparse.RequestParser()
+        parser.add_argument('id', type=str)
+        return parser.parse_args()
+
 class Jobs(Resource):
     def get(self):
         db = app.config['db']
         return db.get_jobs(),200
 
     def post(self):
-        app.logger.info(json.dumps(request.args))
         args = self._parse()
         db = app.config['db']
 

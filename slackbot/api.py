@@ -6,7 +6,7 @@ from redis import StrictRedis
 
 from version import version
 from models import JobsDB
-from resources import Jobs,Actions,Hello
+from resources import Jobs,Actions,Hello,Confirm
 
 app = Flask('slackbot')
 api = Api(app)
@@ -15,7 +15,8 @@ app.config['db'] = JobsDB('localhost', 6379)
 
 resource_map = { Hello   : '/',
                  Jobs    : '/jobs',
-                 Actions : '/actions' }
+                 Actions : '/actions',
+                 Confirm : '/confirm' }
 
 for resource,path in resource_map.iteritems(): 
     api.add_resource(resource, path)
