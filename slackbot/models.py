@@ -9,7 +9,10 @@ class JobsDB(object):
     action_prefix = 'multivac_action'
 
     def __init__(self,redis_host,redis_port):
-        self.redis = StrictRedis(host=redis_host, port=redis_port)
+        self.redis = StrictRedis(
+                host=redis_host,
+                port=redis_port,
+                decode_responses=True)
 
     #######
     # Job Methods 
@@ -49,7 +52,7 @@ class JobsDB(object):
         """
         Return single job dict given a job id
         """
-        return self._format_dict(self.redis.hgetall(self._jobkey(job_id)))
+        return self.redis.hgetall(self._jobkey(job_id))
 
     def get_jobs(self, status=None):
         """
@@ -59,9 +62,9 @@ class JobsDB(object):
         jobs = [ self.redis.hgetall(k) for k in \
                  self.redis.keys(pattern=self._jobkey('*')) ]
         if status:
-            return [ self._format_dict(j) for j in jobs if j['status'] == status ]
+            return [ j for j in jobs if j['status'] == status ]
         else:
-            return [ self._format_dict(j) for j in jobs ]
+            return [ j for j in jobs ]
 
     def get_job_logstream(self, job_id):
         """
@@ -80,7 +83,7 @@ class JobsDB(object):
                 for i in reversed(range(0,count+1)):
                     line = self.redis.lindex(self._logkey(job_id),i)
                     if line:
-                        yield self._format_str(line)
+                        yield line
                 last_length = cur_length
 
             if endstream:
@@ -116,7 +119,7 @@ class JobsDB(object):
         """
         Return a single action dict, given the action name
         """
-        return self._format_dict(self.redis.hgetall(self._actionkey(action_name)))
+        return self.redis.hgetall(self._actionkey(action_name))
 
     def get_actions(self):
         """
@@ -144,15 +147,3 @@ class JobsDB(object):
 
     def _jobkey(self,id):
         return self.job_prefix + ':' + id
-
-    def _format_dict(self, d):
-        ret = {}
-        for k,v in d.items():
-            k = k.decode('unicode_escape')
-            v = v.decode('unicode_escape')
-            ret[k] = v 
-
-        return ret
-
-    def _format_str(self, s):
-        return s.decode('unicode_escape')
