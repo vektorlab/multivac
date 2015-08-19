@@ -1,7 +1,11 @@
+import logging
+
 from redis import StrictRedis
 from datetime import datetime
 from uuid import uuid4
 from time import sleep
+
+log = logging.getLogger('slackbot')
 
 class JobsDB(object):
     job_prefix = 'multivac_job'
@@ -13,6 +17,7 @@ class JobsDB(object):
                 host=redis_host,
                 port=redis_port,
                 decode_responses=True)
+        self.sub = self.redis.pubsub(ignore_subscribe_messages=True)
 
     #######
     # Job Methods 
@@ -20,11 +25,13 @@ class JobsDB(object):
 
     def create_job(self, action_name, args=None):
         """
-        Create a new job with unique ID
+        Create a new job with unique ID and subscribe to log channel
         params:
          - action_name(str): Name of the action this job uses
         """
         job = self.get_action(action_name)
+
+        #validation
         if not job:
             return None
 
@@ -36,6 +43,9 @@ class JobsDB(object):
         else:
             job['status'] = 'ready'
 
+        self.sub.subscribe(self._logkey(job['id']))
+        log.debug('Subscribed to log channel: %s' % self._logkey(job['id']))
+
         self.redis.hmset(self._jobkey(job['id']), job)
 
         return job['id']
@@ -44,9 +54,7 @@ class JobsDB(object):
         """
         Update an arbitrary field for a job
         """
-        job = self.get_job(job_id)
-        job[field] = value
-        self.redis.hmset('multivac_job:' + job_id, job)
+        self.redis.hset(self._jobkey(job_id), field, value)
 
     def get_job(self, job_id):
         """
@@ -66,46 +74,47 @@ class JobsDB(object):
         else:
             return [ j for j in jobs ]
 
-    def get_job_logstream(self, job_id):
+    def get_logstream(self, job_id, append_newline=False):
         """
-        Returns a generator object to stream job output
+        Returns a generator object to stream all job output
         until the job has completed 
         """
-        last_length = 0
-        endstream = False
-        while True:
-            cur_length = self.redis.llen(self._logkey(job_id))
+        key = self._logkey(job_id)
 
-            print(cur_length)
-            print(last_length)
-            if cur_length > last_length:
-                count = cur_length - last_length
-                for i in reversed(range(0,count+1)):
-                    line = self.redis.lindex(self._logkey(job_id),i)
-                    if line:
-                        yield line
-                last_length = cur_length
+        for msg in self.sub.listen():
+            print(msg)
+            if msg['channel'] == key:
+                # unsubscribe from channel and return upon job completion
+                if str(msg['data']) == 'EOF': 
+                    self.sub.unsubscribe(key)
+                    log.debug('Unsubscribed from log channel: %s' % key)
+                    break
+                else:
+                    if append_newline:
+                        yield msg['data'] + '\n'
+                    else:
+                        yield msg['data']
 
-            if endstream:
-                break
-
-            if self.get_job(job_id)['status'] == 'completed':
-                # wait after job is completed to ensure we collect all logs
-                sleep(1)
-                endstream = True
-
-    def get_log(self, job_id):
+    def get_job_log(self, job_id):
         """
-        Return the output log of a given job id
+        Return the stored output of a given job id
         """
-        logs = self.redis.lrange(self._logkey(job_id),0,-1)
+        logs = self.redis.lrange(self._logkey(job_id), 0, -1)
         return [ l for l in reversed(logs) ]
 
-    def append_log(self, job_id, line):
+    def append_job_log(self, job_id, line):
         """
-        Append a line of job output to a redis list
+        Append a line of job output to a redis list and 
+        publish to relevant channel
         """
-        self.redis.lpush(self._logkey(job_id), self._append_ts(line))
+        key = self._logkey(job_id)
+        prefixed_line = self._append_ts(line)
+
+        self.redis.publish(key, prefixed_line)
+        self.redis.lpush(key, prefixed_line)
+
+    def end_job_log(self, job_id):
+        self.redis.publish(self._logkey(job_id), 'EOF')
 
     def _append_ts(self, msg):
         ts = datetime.utcnow().strftime('%a %b %d %H:%M:%S %Y')

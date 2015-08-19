@@ -53,6 +53,8 @@ class Manager(object):
                 action['confirm_required'] = False
             if 'args_required' not in action:
                 action['args_required'] = None
+            if 'stream_output' not in action:
+                action['stream_output'] = False
 
             self.db.add_action(action)
             log.info('loaded action %s' % (action['name']))
@@ -94,6 +96,7 @@ class Manager(object):
         logger.start()
 
         proc.wait()
+        logger.join(timeout=1)
 
     def _log_worker(self, job_id, stdout, stderr):
         log.debug('Log handler started for job %s' % job_id)
@@ -101,12 +104,14 @@ class Manager(object):
             output = self._read(stdout).strip()
             error = self._read(stderr).strip()
             if output:
-                self.db.append_log(job_id, output)
+                self.db.append_job_log(job_id, output)
                 log.debug('%s-STDOUT: %s' % (job_id,output))
             if error:
-                self.db.append_log(job_id, error)
+                self.db.append_job_log(job_id, error)
                 log.debug('%s-STDOUT: %s' % (job_id,error))
             if job_id not in self.pids:
+                #exit when job has been collected
+                self.db.end_job_log(job_id)
                 log.debug('Log handler stopped for job %s' % job_id)
                 return
 
