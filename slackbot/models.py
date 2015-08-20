@@ -33,7 +33,7 @@ class JobsDB(object):
 
         #validation
         if not job:
-            return None
+            return (False, 'No such action')
 
         job['id'] = str(uuid4().hex)
         job['args'] = args
@@ -48,7 +48,7 @@ class JobsDB(object):
 
         self.redis.hmset(self._jobkey(job['id']), job)
 
-        return job['id']
+        return (True, job['id'])
 
     def update_job(self, job_id, field, value):
         """

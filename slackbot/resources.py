@@ -43,11 +43,11 @@ class Jobs(Resource):
         args = self._parse()
         db = app.config['db']
 
-        job_id = db.create_job(args['action'],args=args['action_args'])
-        if not job_id:
-            return { 'error': 'failed to create job' },400
+        ok,reason = db.create_job(args['action'],args=args['action_args'])
+        if not ok:
+            return { 'error' : reason },400
 
-        return { 'id': job_id }
+        return { 'id': reason },200
 
     def _parse(self):
         parser = reqparse.RequestParser()

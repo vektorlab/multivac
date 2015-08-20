@@ -51,10 +51,6 @@ class Manager(object):
         for action in actions:
             if 'confirm_required' not in action:
                 action['confirm_required'] = False
-            if 'args_required' not in action:
-                action['args_required'] = None
-            if 'stream_output' not in action:
-                action['stream_output'] = False
 
             self.db.add_action(action)
             log.info('loaded action %s' % (action['name']))
