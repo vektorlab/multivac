@@ -18,4 +18,8 @@ setup(name='multivac',
           'Programming Language :: Python :: 2.6',
           'Programming Language :: Python :: 2.7',
       ),
-      keywords='slack rtm websocket api chatops bot')
+      keywords='slack rtm websocket api chatops bot',
+      entry_points = {
+        'console_scripts' : ['multivac = multivac.cli:main']
+      }
+)
