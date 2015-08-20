@@ -5,7 +5,7 @@ from datetime import datetime
 from uuid import uuid4
 from time import sleep
 
-log = logging.getLogger('slackbot')
+log = logging.getLogger('multivac')
 
 class JobsDB(object):
     job_prefix = 'multivac_job'

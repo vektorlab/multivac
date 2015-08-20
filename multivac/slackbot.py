@@ -8,9 +8,9 @@ from time import sleep
 from threading import Thread
 from slacksocket import SlackSocket
 
-from .models import JobsDB
+from multivac.models import JobsDB
 
-log = logging.getLogger('slackbot')
+log = logging.getLogger('multivac')
 
 class SlackBot(object):
     """
@@ -80,7 +80,7 @@ class SlackBot(object):
             t.daemon = True
             t.start()
 
-    def _output_handler(self, event, job_id, stream=False):
+    def _output_handler(self, event, job_id, stream=True):
         """
         Worker to post the output of a given job_id to Slack
         params:

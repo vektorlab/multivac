@@ -10,10 +10,10 @@ from redis import StrictRedis
 from threading import Thread
 from copy import deepcopy
 
-from util import unix_time
-from models import JobsDB
+from multivac.util import unix_time
+from multivac.models import JobsDB
 
-log = logging.getLogger('slackbot')
+log = logging.getLogger('multivac')
 
 class Manager(object):
     def __init__(self, redis_host, redis_port, config_path='config.yml'):
@@ -25,7 +25,7 @@ class Manager(object):
         self.run()
 
     def run(self):
-        log.info('Starting SlackBot Manager')
+        log.info('Starting Multivac Manager')
         while True:
             
             #spawn ready jobs

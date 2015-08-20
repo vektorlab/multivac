@@ -1,14 +1,14 @@
 from setuptools import setup
 
-exec(open('slackbot/version.py').read())
+exec(open('multivac/version.py').read())
 
-setup(name='slackbot',
+setup(name='multivac',
       version=version,
-      packages=['slackbot'],
+      packages=['multivac'],
       description='Slack RTM Chatops Bot',
       author='Bradley Cicenas',
       author_email='bradley.cicenas@gmail.com',
-      url='https://github.com/bcicen/slackbot',
+      url='https://github.com/bcicen/multivac',
       install_requires=['slacksocket>=0.4.4'],
       license='http://opensource.org/licenses/MIT',
       classifiers=(
