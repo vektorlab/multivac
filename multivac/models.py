@@ -74,7 +74,15 @@ class JobsDB(object):
         else:
             return [ j for j in jobs ]
 
-    def get_logstream(self, job_id, append_newline=False):
+    def get_log(self, job_id):
+        #return stored log if we're no longer subscribed
+        if self._logkey(job_id) not in self.sub.channels:
+            return self._get_stored_log(job_id)
+        #otherwise return channel generator
+        else:
+            return self._get_logstream(job_id)
+
+    def _get_logstream(self, job_id):
         """
         Returns a generator object to stream all job output
         until the job has completed 
@@ -90,12 +98,9 @@ class JobsDB(object):
                     log.debug('Unsubscribed from log channel: %s' % key)
                     break
                 else:
-                    if append_newline:
-                        yield msg['data'] + '\n'
-                    else:
-                        yield msg['data']
+                    yield msg['data']
 
-    def get_job_log(self, job_id):
+    def _get_stored_log(self, job_id):
         """
         Return the stored output of a given job id
         """

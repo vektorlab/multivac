@@ -73,8 +73,6 @@ class SlackBot(object):
 
             if self.db.get_job(job_id)['status'] == 'pending':
                 self._reply(event, '%s needs confirmation' % str(job_id))
-            else:
-                self._reply(event, 'running %s' % str(job_id))
 
             t = Thread(target=self._output_handler,args=(event, job_id))
             t.daemon = True
@@ -98,16 +96,16 @@ class SlackBot(object):
                 active = True
             else:
                 sleep(1)
+
+        self._reply(event, '%s running' % str(job_id))
+
         if stream:
-            for line in self.db.get_logstream(job_id): 
+            for line in self.db.get_log(job_id):
                 print(line)
                 self._reply(event, '`' + prefix + line + '`')
         else:
             msg = ''
-            while self.db.get_job(job_id)['status'] != 'completed': 
-                sleep(1)
-
-            for line in self.db.get_logstream(job_id): 
+            for line in self.db.get_log(job_id):
                 msg += '`' + prefix + line + '`\n'
 
             self._reply(event, msg)
