@@ -9,7 +9,7 @@ setup(name='multivac',
       author='Bradley Cicenas',
       author_email='bradley.cicenas@gmail.com',
       url='https://github.com/bcicen/multivac',
-      install_requires=['slacksocket>=0.4.4'],
+      install_requires=['slacksocket>=0.5.1'],
       license='http://opensource.org/licenses/MIT',
       classifiers=(
           'License :: OSI Approved :: MIT License ',
