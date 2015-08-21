@@ -53,10 +53,17 @@ class SlackBot(object):
             ok,reason = self._confirm_job(job_id)
             self._reply(event, reason)
 
-        elif command == 'status':
-            jobs = self.db.get_jobs()
+        elif command == 'jobs':
+            subcommands = [ 'pending', 'running', 'completed' ]
+            if args not in subcommands:
+                self._reply(event, 'argument must be one of %s' % \
+                            ','.join(subcommands))
+                return
+
+            jobs = self.db.get_jobs(status=args)
+
             if not jobs:
-                self._reply(event, '```no jobs found```')
+                self._reply(event, '```no ' + args + ' jobs found```')
             else:
                 msg = [ json.dumps(j) for j in jobs ]
                 self._reply(event, '```' + '\n'.join(msg) + '```')
