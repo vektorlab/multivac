@@ -25,7 +25,7 @@ class Manager(object):
         self.run()
 
     def run(self):
-        log.info('Starting Multivac Manager')
+        print('Starting Multivac Manager')
         while True:
             
             #spawn ready jobs

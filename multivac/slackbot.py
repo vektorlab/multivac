@@ -18,7 +18,7 @@ class SlackBot(object):
      - slack_token(str): 
     """
     def __init__(self, slack_token, redis_host, redis_port, concurrency=5):
-        log.info('Starting Slackbot')
+        print('Starting Slackbot')
 
         self.db  = JobsDB(redis_host, redis_port)
 

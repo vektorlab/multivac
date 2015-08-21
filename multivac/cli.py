@@ -1,11 +1,9 @@
-import yaml
 import sys
+import yaml
+import logging
 from argparse import ArgumentParser
 
 from multivac.version import version
-from multivac.slackbot import SlackBot
-from multivac.manager import Manager
-from multivac.api import MultivacApi
 
 #defaults
 config = { 'api' : {}, 'slackbot' : {} }
@@ -21,10 +19,21 @@ def main():
                         dest='redis',
                         help='redis host to connect to (127.0.0.1:6379)',
                         default='127.0.0.1:6379')
+    parser.add_argument('-d',
+                        action='store_true',
+                        help='enable debug output')
     parser.add_argument('subcommand',
                         choices=subcommands)
 
     args = parser.parse_args()
+
+    if args.d:
+        log = logging.getLogger('multivac')
+        logging.basicConfig(level=logging.DEBUG)
+        log.debug('Debug logging enabled')
+    else:
+        log = logging.getLogger('multivac')
+        logging.basicConfig(level=logging.WARN)
 
     try:
         with open(args.config_path, 'r') as of:
@@ -40,6 +49,7 @@ def main():
         redis_port = 6379
 
     if args.subcommand == 'api':
+        from multivac.api import MultivacApi
         api = MultivacApi(redis_host,redis_port)
 
         if 'listen_port' in config['api']:
@@ -48,6 +58,7 @@ def main():
             api.start_server()
 
     if args.subcommand == 'worker':
+        from multivac.manager import Manager
         m = Manager(redis_host, redis_port)
 
     if args.subcommand == 'slackbot':
@@ -55,6 +66,7 @@ def main():
             print('no slack token defined, exiting') 
             sys.exit(1)
 
+        from multivac.slackbot import SlackBot
         s = SlackBot(config['slackbot']['slack_token'], redis_host, redis_port)
 
 if __name__ == '__main__':
