@@ -9,30 +9,20 @@ from multivac.api import MultivacApi
 
 #defaults
 config = { 'api' : {}, 'slackbot' : {} }
+subcommands = [ 'worker', 'slackbot', 'api' ]
 
 def main():
-    common_parser = ArgumentParser(add_help=False)
-    common_parser.add_argument('--config',
+    parser = ArgumentParser(description='multivac v%s' % (version))
+    parser.add_argument('-c',
                         dest='config_path',
-                        help='path to config file (/etc/multivac.conf)',
+                        help='path to config file (default: %(default)s)',
                         default='/etc/multivac.conf')
-    common_parser.add_argument('--redis',
+    parser.add_argument('-r',
                         dest='redis',
                         help='redis host to connect to (127.0.0.1:6379)',
                         default='127.0.0.1:6379')
-
-    parser = ArgumentParser(description='multivac v%s' % (version))
-    subparsers = parser.add_subparsers(description='multivac subcommands',
-                                       dest='subcommand')
-
-    #worker
-    parser_worker = subparsers.add_parser('worker',parents=[common_parser])
-
-    #slackbot
-    parser_slackbot = subparsers.add_parser('slackbot',parents=[common_parser])
-
-    #api
-    parser_api = subparsers.add_parser('api',parents=[common_parser])
+    parser.add_argument('subcommand',
+                        choices=subcommands)
 
     args = parser.parse_args()
 
