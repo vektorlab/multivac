@@ -21,12 +21,12 @@ class MultivacApi(object):
 
         self.app.config['db'] = JobsDB(redis_host, redis_port)
 
-        for resource,path in resource_map.iteritems(): 
+        for resource,path in resource_map.items():
             self.api.add_resource(resource, path)
 
         @self.app.route('/logs')
         def logs():
-            if not request.args.has_key('id'):
+            if 'id' not in request.args:
                 return json.dumps({'error':'no id provided'}), 400
 
             db = self.app.config['db']
@@ -39,7 +39,7 @@ class MultivacApi(object):
             return Response(stream_with_context(stream(logstream)))
 
     def start_server(self, listen_port=8000):
-        print('Starting Multivac API v%s' % version)
+        print(('Starting Multivac API v%s' % version))
         http_server = WSGIServer(('', listen_port), self.app)
         http_server.serve_forever()
 

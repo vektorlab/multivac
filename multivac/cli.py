@@ -40,7 +40,7 @@ def main():
         with open(args.config_path, 'r') as of:
             config.update(yaml.load(of.read()))
     except IOError:
-        print('error reading config %s' % args.config_path)
+        print(('error reading config %s' % args.config_path))
         sys.exit(1)
 
     if ':' in args.redis:

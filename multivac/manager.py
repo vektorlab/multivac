@@ -34,7 +34,7 @@ class Manager(object):
 
             #collect ended processes
             pids = deepcopy(self.pids)
-            for job_id,pid in pids.iteritems():
+            for job_id,pid in pids.items():
                 if not self._is_running(pid):
                     self.db.update_job(job_id, 'status', 'completed')
                     log.info('Collected ended job %s' % job_id)
