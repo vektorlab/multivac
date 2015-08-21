@@ -11,6 +11,7 @@ class JobsDB(object):
     job_prefix = 'multivac_job'
     log_prefix = 'multivac_log'
     action_prefix = 'multivac_action'
+    worker_prefix = 'multivac_worker'
 
     def __init__(self,redis_host,redis_port):
         self.redis = StrictRedis(
@@ -36,6 +37,7 @@ class JobsDB(object):
             return (False, 'No such action')
 
         job['id'] = str(uuid4().hex)
+        job['args'] = args
         job['args'] = args
 
         if job['confirm_required'] == "True":
@@ -150,6 +152,19 @@ class JobsDB(object):
           self.redis.keys(pattern=self._actionkey('*')) ]
 
     #######
+    # Job Worker Methods 
+    #######
+    def register_worker(self, name, hostname):
+        key = self._workerkey(name)
+
+        self.redis.set(key, hostname)
+        self.redis.expire(key, 15)
+
+    def get_workers(self):
+        return { k : self.redis.get(k) \
+                for k in  self.redis.keys(pattern=self._workerkey('*')) }
+
+    #######
     # Keyname Methods 
     #######
 
@@ -161,3 +176,6 @@ class JobsDB(object):
 
     def _jobkey(self,id):
         return self.job_prefix + ':' + id
+
+    def _workerkey(self,id):
+        return self.worker_prefix + ':' + id

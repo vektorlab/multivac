@@ -53,6 +53,14 @@ class SlackBot(object):
             ok,reason = self._confirm_job(job_id)
             self._reply(event, reason)
 
+        elif command == 'workers':
+            workers = self.db.get_workers()
+            if not workers:
+                self._reply(event, '```no registered workers```')
+            else:
+                msg = [ k + ':' + v for k,v in workers.items() ]
+                self._reply(event, '```' + '\n'.join(msg) + '```')
+
         elif command == 'jobs':
             subcommands = [ 'pending', 'running', 'completed' ]
             if args not in subcommands:
@@ -85,7 +93,7 @@ class SlackBot(object):
             t.daemon = True
             t.start()
 
-    def _output_handler(self, event, job_id, stream=True):
+    def _output_handler(self, event, job_id, stream=False):
         """
         Worker to post the output of a given job_id to Slack
         params:
@@ -108,7 +116,6 @@ class SlackBot(object):
 
         if stream:
             for line in self.db.get_log(job_id):
-                print(line)
                 self._reply(event, '`' + prefix + line + '`')
         else:
             msg = ''

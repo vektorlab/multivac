@@ -1,9 +1,11 @@
+import os
+import socket
 import logging
 import yaml
 import subprocess
 import fcntl
 import shlex
-import os
+import names
 
 from time import sleep
 from redis import StrictRedis
@@ -19,15 +21,20 @@ class JobWorker(object):
     def __init__(self, redis_host, redis_port, config_path='config.yml'):
         self.config_path = config_path
         self.db = JobsDB(redis_host, redis_port)
+
         self.pids = {} #dict of job_id:subprocess object
 
         self._load_actions()
+        self.name = self._get_name()
+
         self.run()
 
     def run(self):
-        print('Starting Multivac Job Worker')
+        print('Starting Multivac Job Worker %s' % self.name)
         while True:
             
+            self.db.register_worker(self.name, socket.getfqdn())
+
             #spawn ready jobs
             for job in self.db.get_jobs(status='ready'):
                 self._start_job(job)
@@ -41,7 +48,14 @@ class JobWorker(object):
                     print('completed job %s' % job['id'])
                     del self.pids[job_id]
 
-            sleep(1)
+            sleep(2)
+
+    def _get_name(self):
+        name = names.get_first_name()
+        if name in self.db.get_workers():
+            self._get_name()
+        else:
+            return name
 
     def _load_actions(self):
         with open(self.config_path, 'r') as of:
@@ -99,12 +113,14 @@ class JobWorker(object):
     def _log_worker(self, job_id, stdout, stderr):
         log.debug('Log handler started for job %s' % job_id)
         while True:
-            output = self._read(stdout).strip()
-            error = self._read(stderr).strip()
+            output = self._read(stdout)
+            error = self._read(stderr)
             if output:
+                output = self._sanitize(output)
                 self.db.append_job_log(job_id, output)
                 log.debug('%s-STDOUT: %s' % (job_id,output))
             if error:
+                error = self._sanitize(error)
                 self.db.append_job_log(job_id, error)
                 log.debug('%s-STDOUT: %s' % (job_id,error))
             if job_id not in self.pids:
@@ -112,6 +128,12 @@ class JobWorker(object):
                 self.db.end_job_log(job_id)
                 log.debug('Log handler stopped for job %s' % job_id)
                 return
+
+    def _sanitize(self, line):
+        line = line.decode('utf-8')
+        line = line.replace('\n', '')
+
+        return line
 
     def _read(self, pipe):
         """
