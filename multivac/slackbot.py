@@ -56,10 +56,10 @@ class SlackBot(object):
         elif command == 'workers':
             workers = self.db.get_workers()
             if not workers:
-                self._reply(event, '```no registered workers```')
+                self._reply(event, 'no registered workers')
             else:
                 msg = [ k + ':' + v for k,v in workers.items() ]
-                self._reply(event, '```' + '\n'.join(msg) + '```')
+                self._reply(event, '\n'.join(msg), code=True)
 
         elif command == 'jobs':
             subcommands = [ 'pending', 'running', 'completed' ]
@@ -71,10 +71,10 @@ class SlackBot(object):
             jobs = self.db.get_jobs(status=args)
 
             if not jobs:
-                self._reply(event, '```no ' + args + ' jobs found```')
+                self._reply(event, 'no ' + args + ' jobs found', code=True)
             else:
                 msg = [ json.dumps(j) for j in jobs ]
-                self._reply(event, '```' + '\n'.join(msg) + '```')
+                self._reply(event, '\n'.join(msg), code=True)
 
         else:
             ok,result = self.db.create_job(command, args=args)
@@ -93,7 +93,7 @@ class SlackBot(object):
             t.daemon = True
             t.start()
 
-    def _output_handler(self, event, job_id, stream=False):
+    def _output_handler(self, event, job_id, stream=True):
         """
         Worker to post the output of a given job_id to Slack
         params:
@@ -112,19 +112,19 @@ class SlackBot(object):
             else:
                 sleep(1)
 
-        self._reply(event, '%s running' % str(job_id))
+        self._reply(event, '%s running' % str(job_id), code=True)
 
         if stream:
             for line in self.db.get_log(job_id):
-                self._reply(event, '`' + prefix + line + '`')
+                self._reply(event, prefix + line, code=True)
         else:
             msg = ''
             for line in self.db.get_log(job_id):
-                msg += '`' + prefix + line + '`\n'
+                msg += prefix + line + '\n'
 
-            self._reply(event, msg)
+            self._reply(event, msg, code=True)
 
-        self._reply(event, '`' + prefix + ' Done`')
+        self._reply(event, prefix + ' Done', code=True)
 
     def _confirm_job(self, job_id):
         job = self.db.get_job(job_id)
@@ -137,13 +137,16 @@ class SlackBot(object):
 
         return (True,'confirmed job: %s' % job_id)
 
-    def _reply(self, event, msg):
+    def _reply(self, event, msg, code=False):
         """
         Reply to a channel or user derived from a slacksocket message
         """
         #skip any empty messages
         if not msg:
             return
+
+        if code:
+            msg = '`' + msg + '`'
 
         channel = event.event['channel']
 

@@ -92,7 +92,6 @@ class JobsDB(object):
         key = self._logkey(job_id)
 
         for msg in self.sub.listen():
-            print(msg)
             if msg['channel'] == key:
                 # unsubscribe from channel and return upon job completion
                 if str(msg['data']) == 'EOF': 
