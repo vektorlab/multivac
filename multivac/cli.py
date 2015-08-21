@@ -58,8 +58,8 @@ def main():
             api.start_server()
 
     if args.subcommand == 'worker':
-        from multivac.manager import Manager
-        m = Manager(redis_host, redis_port)
+        from multivac.worker import JobWorker
+        w = JobWorker(redis_host, redis_port)
 
     if args.subcommand == 'slackbot':
         if 'slack_token' not in config['slackbot']:

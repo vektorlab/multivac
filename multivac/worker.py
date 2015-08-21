@@ -15,7 +15,7 @@ from multivac.models import JobsDB
 
 log = logging.getLogger('multivac')
 
-class Manager(object):
+class JobWorker(object):
     def __init__(self, redis_host, redis_port, config_path='config.yml'):
         self.config_path = config_path
         self.db = JobsDB(redis_host, redis_port)
@@ -25,7 +25,7 @@ class Manager(object):
         self.run()
 
     def run(self):
-        print('Starting Multivac Manager')
+        print('Starting Multivac Job Worker')
         while True:
             
             #spawn ready jobs
@@ -38,6 +38,7 @@ class Manager(object):
                 if not self._is_running(pid):
                     self.db.update_job(job_id, 'status', 'completed')
                     log.info('Collected ended job %s' % job_id)
+                    print('completed job %s' % job['id'])
                     del self.pids[job_id]
 
             sleep(1)
@@ -70,6 +71,7 @@ class Manager(object):
         return True
 
     def _job_worker(self, job):
+        print('running job %s' % job['id'])
         log.debug('Worker spawned for job %s' % job['id'])
         self.db.update_job(job['id'], 'status', 'running')
 
