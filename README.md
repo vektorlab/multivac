@@ -1,5 +1,9 @@
 # Multivac
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/bcicen/multivac/master/logo.png" alt="Statsquid"/>
+</p>
+
 A ChatOps bot for Slack with a integrated job queue and RESTful API
 
 # Installing
