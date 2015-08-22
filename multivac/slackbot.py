@@ -9,6 +9,7 @@ from threading import Thread
 from slacksocket import SlackSocket
 
 from multivac.models import JobsDB
+from multivac.util import format_time
 
 log = logging.getLogger('multivac')
 
@@ -62,7 +63,7 @@ class SlackBot(object):
                 self._reply(event, '\n'.join(msg), code=True)
 
         elif command == 'jobs':
-            subcommands = [ 'pending', 'running', 'completed' ]
+            subcommands = [ 'pending', 'running', 'completed', 'all' ]
             if args not in subcommands:
                 self._reply(event, 'argument must be one of %s' % \
                             ','.join(subcommands))
@@ -73,8 +74,13 @@ class SlackBot(object):
             if not jobs:
                 self._reply(event, 'no ' + args + ' jobs found', code=True)
             else:
-                msg = [ json.dumps(j) for j in jobs ]
-                self._reply(event, '\n'.join(msg), code=True)
+                msg = []
+                for j in jobs:
+                    created = format_time(j['created'])
+                    msg.append('%s %s(%s) %s' % \
+                            (created, j['id'], j['name'], j['status']))
+
+                self._reply(event, '\n'.join(msg), codeblock=True)
 
         else:
             ok,result = self.db.create_job(command, args=args)
@@ -137,7 +143,7 @@ class SlackBot(object):
 
         return (True,'confirmed job: %s' % job_id)
 
-    def _reply(self, event, msg, code=False):
+    def _reply(self, event, msg, code=False, codeblock=False):
         """
         Reply to a channel or user derived from a slacksocket message
         """
@@ -147,6 +153,9 @@ class SlackBot(object):
 
         if code:
             msg = '`' + msg + '`'
+
+        if codeblock:
+            msg = '```' + msg + '```'
 
         channel = event.event['channel']
 

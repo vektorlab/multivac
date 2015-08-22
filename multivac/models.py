@@ -5,6 +5,8 @@ from datetime import datetime
 from uuid import uuid4
 from time import sleep
 
+from multivac.util import unix_time
+
 log = logging.getLogger('multivac')
 
 class JobsDB(object):
@@ -38,7 +40,7 @@ class JobsDB(object):
 
         job['id'] = str(uuid4().hex)
         job['args'] = args
-        job['args'] = args
+        job['created'] = unix_time(datetime.utcnow())
 
         if job['confirm_required'] == "True":
             job['status'] = 'pending'
@@ -57,6 +59,7 @@ class JobsDB(object):
         Update an arbitrary field for a job
         """
         self.redis.hset(self._jobkey(job_id), field, value)
+        return (True, )
 
     def get_job(self, job_id):
         """
@@ -64,14 +67,14 @@ class JobsDB(object):
         """
         return self.redis.hgetall(self._jobkey(job_id))
 
-    def get_jobs(self, status=None):
+    def get_jobs(self, status='all'):
         """
         Return all jobs dicts, optionally filtered by status 
         via the 'status' param
         """
         jobs = [ self.redis.hgetall(k) for k in \
                  self.redis.keys(pattern=self._jobkey('*')) ]
-        if status:
+        if status != 'all':
             return [ j for j in jobs if j['status'] == status ]
         else:
             return [ j for j in jobs ]
@@ -80,7 +83,7 @@ class JobsDB(object):
         #return stored log if we're no longer subscribed
         if self._logkey(job_id) not in self.sub.channels:
             return self._get_stored_log(job_id)
-        #otherwise return channel generator
+        #otherwise return streaming log generator
         else:
             return self._get_logstream(job_id)
 
