@@ -57,7 +57,7 @@ def main():
         w = JobWorker(redis_host, redis_port)
 
     if args.subcommand == 'slackbot':
-        if not 'config['slack_token']:
+        if not config['slack_token']:
             print('no slack token defined, exiting') 
             sys.exit(1)
 
