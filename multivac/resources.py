@@ -1,4 +1,5 @@
 import json
+import operator
 from flask import Response, current_app, stream_with_context
 from flask_restful import Resource, Api, reqparse, request, abort
 
@@ -26,29 +27,23 @@ def make_error(status_code, msg):
 def invalid_resource():
     return make_error(410,'a resource with that id does not exist')
 
-class Hello(Resource):
+class Version(Resource):
     def get(self):
         return { 'Multivac API' : 'v%s' % version },200
 
 class Confirm(Resource):
-    def post(self):
-        args = self._parse()
+    def post(self, job_id):
         db = app.config['db']
 
-        job = db.get_job(args['id'])
+        job = db.get_job(job_id)
         if not job:
             return invalid_resource()
         if job['status'] != 'pending':
             return make_error(400, 'job not awaiting confirm')
 
-        db.update_job(args['id'], 'status', 'ready')
+        db.update_job(job_id, 'status', 'ready')
 
         return { 'ok': True }
-
-    def _parse(self):
-        parser = reqparse.RequestParser()
-        parser.add_argument('id', type=str)
-        return parser.parse_args()
 
 class Job(Resource):
     def get(self, job_id):
@@ -62,15 +57,21 @@ class Job(Resource):
 class Jobs(Resource):
     def get(self):
         db = app.config['db']
-        return db.get_jobs(),200
+        jobs = db.get_jobs()
+        jobs.sort(key=operator.itemgetter('created'), reverse=True)
+
+        return jobs,200
 
     def post(self):
         args = self._parse()
         db = app.config['db']
 
+        if not args['action']:
+            return make_error('missing required parameter "action"', 400)
+
         ok,result = db.create_job(args['action'],args=args['action_args'])
         if not ok:
-            return make_error(result)
+            return make_error(400, result)
 
         return { 'id': result },200
 
@@ -82,14 +83,23 @@ class Jobs(Resource):
 
 class Logs(Resource):
     def get(self, job_id):
+        args = self._parse()
         db = app.config['db']
-        logstream = db.get_log(job_id)
 
         def stream(gen):
             for l in gen:
                 yield l + '\n'
 
+        if args['json']:
+           return [ l for l in db._get_stored_log(job_id) ],200
+
+        logstream = db.get_log(job_id)
         return Response(stream_with_context(stream(logstream)))
+
+    def _parse(self):
+        parser = reqparse.RequestParser()
+        parser.add_argument('json', type=bool)
+        return parser.parse_args()
 
 class Action(Resource):
     def get(self, action_name):
