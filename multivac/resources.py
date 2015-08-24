@@ -104,3 +104,8 @@ class Actions(Resource):
     def get(self):
         db = app.config['db']
         return db.get_actions(),200
+
+class Workers(Resource):
+    def get(self):
+        db = app.config['db']
+        return db.get_workers(),200
