@@ -1,19 +1,21 @@
 import time
 import json
-from flask import Flask, Response, redirect, request, stream_with_context
-from flask_restful import Api,abort
+from flask import Flask, Response, redirect, request
+from flask_restful import Api, abort
 from gevent.wsgi import WSGIServer
 from redis import StrictRedis
 
 from multivac.version import version
 from multivac.models import JobsDB
-from multivac.resources import Job, Jobs, Actions, Hello, Confirm
+from multivac.resources import Job, Jobs, Action, Actions, Hello, Confirm, Logs
 
 resource_map = { Hello   : '/',
                  Jobs    : '/jobs',
                  Actions : '/actions',
                  Confirm : '/confirm',
-                 Job     : '/jobs/<string:job_id>' }
+                 Job     : '/jobs/<string:job_id>',
+                 Logs    : '/logs/<string:job_id>',
+                 Action  : '/actions/<string:action_name>' }
 
 class MultivacApi(object):
     def __init__(self, redis_host, redis_port):
@@ -24,20 +26,6 @@ class MultivacApi(object):
 
         for resource,path in resource_map.items():
             self.api.add_resource(resource, path)
-
-        @self.app.route('/logs')
-        def logs():
-            if 'id' not in request.args:
-                return json.dumps({'error':'no id provided'}), 400
-
-            db = self.app.config['db']
-            logstream = db.get_log(request.args['id'])
-
-            def stream(gen):
-                for l in gen:
-                    yield l + '\n'
-
-            return Response(stream_with_context(stream(logstream)))
 
     def start_server(self, listen_port=8000):
         print(('Starting Multivac API v%s' % version))
