@@ -1,12 +1,12 @@
+#global config
 redis: "127.0.0.1:6379"
-
-slackbot:
-slack_token: 1234
-
-api:
-  listen_port: 8000
-
 actions:
   - name: echo
     cmd: /bin/echo
     confirm_required: True
+
+#slackbot config
+slack_token: 1234
+
+#api config
+api_listen_port: 8000

@@ -7,10 +7,8 @@ from multivac.version import version
 
 subcommands = [ 'worker', 'slackbot', 'api' ]
 #defaults
-config = { 'api' : {
-             'listen_port' : 8000 
-           },
-           'slackbot' : {},
+config = { 'api_listen_port' : 8000,
+           'slack_token' : None,
            'redis': '127.0.0.1:6379' }
 
 def main():
@@ -52,17 +50,14 @@ def main():
         from multivac.api import MultivacApi
         api = MultivacApi(redis_host,redis_port)
 
-        if 'listen_port' in config['api']:
-            api.start_server(listen_port=config['api']['listen_port'])
-        else:
-            api.start_server()
+        api.start_server(listen_port=config['api_listen_port'])
 
     if args.subcommand == 'worker':
         from multivac.worker import JobWorker
         w = JobWorker(redis_host, redis_port)
 
     if args.subcommand == 'slackbot':
-        if 'slack_token' not in config['slackbot']:
+        if not 'config['slack_token']:
             print('no slack token defined, exiting') 
             sys.exit(1)
 
