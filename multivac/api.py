@@ -7,12 +7,13 @@ from redis import StrictRedis
 
 from multivac.version import version
 from multivac.models import JobsDB
-from multivac.resources import Jobs, Actions, Hello, Confirm
+from multivac.resources import Job, Jobs, Actions, Hello, Confirm
 
 resource_map = { Hello   : '/',
                  Jobs    : '/jobs',
                  Actions : '/actions',
-                 Confirm : '/confirm' }
+                 Confirm : '/confirm',
+                 Job     : '/jobs/<string:job_id>' }
 
 class MultivacApi(object):
     def __init__(self, redis_host, redis_port):

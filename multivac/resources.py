@@ -34,6 +34,18 @@ class Confirm(Resource):
         parser.add_argument('id', type=str)
         return parser.parse_args()
 
+class Job(Resource):
+    def get(self, job_id):
+        db = app.config['db']
+        job = db.get_job(job_id)
+        if not job:
+            return { 'error': 'no such job id' },400
+
+        return job,200
+
+    def post(self):
+        return {},403
+
 class Jobs(Resource):
     def get(self):
         db = app.config['db']
