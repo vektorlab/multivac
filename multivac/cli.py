@@ -62,7 +62,7 @@ def main():
             sys.exit(1)
 
         from multivac.slackbot import SlackBot
-        s = SlackBot(config['slackbot']['slack_token'], redis_host, redis_port)
+        s = SlackBot(config['slack_token'], redis_host, redis_port)
 
 if __name__ == '__main__':
     main()
