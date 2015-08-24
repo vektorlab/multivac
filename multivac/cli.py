@@ -5,9 +5,13 @@ from argparse import ArgumentParser
 
 from multivac.version import version
 
-#defaults
-config = { 'api' : {}, 'slackbot' : {} }
 subcommands = [ 'worker', 'slackbot', 'api' ]
+#defaults
+config = { 'api' : {
+             'listen_port' : 8000 
+           },
+           'slackbot' : {},
+           'redis': '127.0.0.1:6379' }
 
 def main():
     parser = ArgumentParser(description='multivac v%s' % (version))
@@ -15,10 +19,6 @@ def main():
                         dest='config_path',
                         help='path to config file (default: %(default)s)',
                         default='/etc/multivac.conf')
-    parser.add_argument('-r',
-                        dest='redis',
-                        help='redis host to connect to (127.0.0.1:6379)',
-                        default='127.0.0.1:6379')
     parser.add_argument('-d',
                         action='store_true',
                         help='enable debug output')
@@ -42,10 +42,10 @@ def main():
         print(('error reading config %s' % args.config_path))
         sys.exit(1)
 
-    if ':' in args.redis:
-        redis_host,redis_port = args.redis.split(':')
+    if ':' in config['redis']:
+        redis_host,redis_port = config['redis'].split(':')
     else:
-        redis_host = args.redis
+        redis_host = config['redis']
         redis_port = 6379
 
     if args.subcommand == 'api':
