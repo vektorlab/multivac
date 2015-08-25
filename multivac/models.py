@@ -1,4 +1,5 @@
 import logging
+import redis.exceptions
 
 from redis import StrictRedis
 from datetime import datetime
@@ -21,6 +22,8 @@ class JobsDB(object):
                 port=redis_port,
                 decode_responses=True)
         self.sub = self.redis.pubsub(ignore_subscribe_messages=True)
+
+        #TODO: add connection test with r.config_get('port')
 
     #######
     # Job Methods 

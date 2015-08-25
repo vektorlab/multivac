@@ -1,4 +1,4 @@
-slacksocket>=0.5.1
+slacksocket>=0.5.2
 Flask==0.10.1
 Flask-RESTful==0.3.2
 gevent==1.1b1
