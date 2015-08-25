@@ -83,7 +83,8 @@ class SlackBot(object):
                 self._reply(event, '\n'.join(msg), codeblock=True)
 
         else:
-            ok,result = self.db.create_job(command, args=args)
+            user = event.event['user']
+            ok,result = self.db.create_job(command, args=args, initiator=user)
             if not ok:
                 self._reply(event, 'failed to create job: %s' % result)
                 return

@@ -29,11 +29,14 @@ class JobsDB(object):
     # Job Methods 
     #######
 
-    def create_job(self, action_name, args=None):
+    def create_job(self, action_name, args=None, initiator=None):
         """
         Create a new job with unique ID and subscribe to log channel
         params:
          - action_name(str): Name of the action this job uses
+         - args(str): Optional space-delimited series of arguments to be
+           appended to the job command
+         - initiator(str): Optional name of the user who initiated this job
         """
         job = self.get_action(action_name)
 
@@ -52,6 +55,9 @@ class JobsDB(object):
 
         self.sub.subscribe(self._logkey(job['id']))
         log.debug('Subscribed to log channel: %s' % self._logkey(job['id']))
+
+        if initiator:
+            self.append_job_log(job['id'], 'Job initiated by %s' % initiator)
 
         self.redis.hmset(self._jobkey(job['id']), job)
 
