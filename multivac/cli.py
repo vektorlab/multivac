@@ -16,7 +16,7 @@ def main():
     parser.add_argument('-c',
                         dest='config_path',
                         help='path to config file (default: %(default)s)',
-                        default='/etc/multivac.conf')
+                        default='/etc/multivac.yml')
     parser.add_argument('-d',
                         action='store_true',
                         help='enable debug output')

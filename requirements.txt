@@ -4,3 +4,4 @@ Flask-RESTful==0.3.2
 gevent==1.1b1
 redis==2.10.3
 names==0.3.0
+PyYAML==3.11
