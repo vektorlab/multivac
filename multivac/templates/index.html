@@ -1,0 +1,340 @@
+
+<html>
+  <head>
+    <title>Multivac</title>
+    <script src="//code.jquery.com/jquery-1.10.2.js"></script>
+    <script src="/static/jquery.dim-background.min.js"></script>
+		<style type="text/css">
+			body{
+		    margin:0;
+		    padding:0;
+		    position:relative;
+		    font:16px/24px 'Droid Sans', 'Tangerine', 'Inconsolata', serif;
+		    //background:#151e25 url(bg.jpg);
+		    //background-position: 0px -300px;
+		    //background-repeat:no-repeat;
+		    //background-position: bottom center}
+
+      #header {
+        width: 100%;
+        height: 55px;
+        background-image: url(/static/multivac.png);
+        background-repeat: no-repeat;
+        background-position: 20px 5px;
+			  text-align: right;
+				margin-left: -10px;
+      }
+
+      #line {
+        width: 90%;
+        border-bottom: #aaa 2px solid;
+        margin-left: auto;
+        margin-right: auto;
+        margin-top: 5px;
+        margin-bottom: 10px;
+      }
+
+      #wrap {
+        width: 100%;
+        text-align: center;
+      }
+
+			#jobs-panel,#logs-panel, #actions-panel {
+			  display: inline-block;
+        vertical-align: top;
+			}
+
+      form {
+        text-align: center;
+        margin: 5px;
+      }
+
+      select {
+        width: 150px;
+      }
+
+      label {
+        margin-left: 15px;
+        float: left;
+      }
+
+      input[type=submit] {
+        margin-right: 15px;
+        float: right;
+      }
+
+      input[type=text] {
+        width: 250px;
+        float: right;
+        margin-right: 15px;
+        text-align: center;
+      }
+
+      #msgbox {
+        display: none;
+        margin-top: 20px;
+        position: fixed; top:20%; right:36%;
+        padding: 10px;
+        background-color: rgba(236, 236, 236, 1);
+        border-radius: 8px;
+        text-align: center;
+        font-size:0.9em;
+      }
+
+			table {
+          width: 400px;
+				  padding: 10px;
+				  margin: auto;
+			    opacity: 0.9;
+			    filter:alpha(opacity=98);
+			}
+			
+			table a:link {
+			    color: #a8a8a8;
+			    background: transparent;
+			    text-decoration: underline;
+			}
+			
+			table a:visited {
+			    color: #a8a8a8;
+			    background: transparent;
+			    text-decoration: underline;
+			}
+			
+			table td, table th {
+			    padding: 1px 5px;
+			}
+			
+			table thead {
+			}
+			
+			table th {
+			    padding: 5px;
+			    border:1px solid #a1a5a7;
+			    border-radius: 4px 4px 4px 4px;
+			}
+			
+			table tr {
+					background-color: rgba(0,0,50,.05);
+			}
+
+			table td {
+			    font-size: 14px;
+			    padding: 5px;
+			    color: #2A2A2A;
+			    overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          max-width: 200px;
+			}
+			
+			table td:hover {
+			    background-color: #fff;
+			}
+
+			.yellow {
+				  background-color: rgb(255, 195, 105);
+			}
+
+			.green {
+				  background-color: rgba(0, 152, 24, 0.46);
+			}
+
+	</style>
+  <script>
+String.prototype.splice = function (index, count, add) {
+	return this.slice(0, index) + (add || "") + this.slice(index + count);
+};
+
+function show_msg(text) {
+    var newdiv = $('<div id="msgbox">' + text  + '</div>').hide();
+    $('#msgbox').replaceWith(newdiv);
+    $('#msgbox').delay(100).fadeIn();
+    $('#msgbox').dimBackground({
+      darkness : 0.6
+    });
+};
+
+function do_confirm(job_id) {
+	var url = '/confirm/' + job_id;
+	$.post(url, function(data) {
+    console.log(data.ok);
+    if (data.ok === true) {
+      show_msg('Succesfully confirmed job ' + job_id);
+    };
+	});
+};
+
+$(function() {
+  $('#createjob').submit(function() {
+  formdata = $(this).serializeArray();
+  var job = {}; 
+
+	for (var i in formdata) {
+		param = formdata[i];
+    job[param.name] = param.value;
+  }
+
+	$.post('/jobs', job, function(data) {
+    show_logs(data.id);
+    show_msg('Successfully created job with id: ' + data.id);
+	});
+
+  return false;
+
+	});
+});
+
+function show_logs(job_id) {
+  var current_log = localStorage.getItem('current_log');
+  if (current_log != job_id) { 
+   console.log('switching to new log'); 
+   localStorage.setItem('current_log', job_id);
+   localStorage.setItem('current_log_length', 0);
+  };
+
+	var url = '/logs/' + job_id + '?json=true';
+  $.getJSON(url, function(logs) {
+    var log_length = parseInt(localStorage.getItem('current_log_length'));
+    if (log_length < logs.length) {
+      jQuery('#logs-panel').empty();
+
+      var tbl = document.createElement('table');
+
+      var thd = document.createElement('thead');
+			var idtrunc = job['id'].splice(0,21)
+      thd.innerHTML = '<tr><th>Logs(' + idtrunc + ')</th></tr>';
+
+      tbl.appendChild(thd);
+
+	  	for (var i in logs) {
+		  	logline = logs[i]
+
+        var row = document.createElement('tr');
+        var line = document.createElement('td');
+			  line.innerHTML = logline;
+
+			  row.appendChild(line);
+        tbl.appendChild(row);
+		  };
+      jQuery("#logs-panel").append(tbl);
+      localStorage.setItem('current_log_length', logs.length);
+      console.log('updated logs')
+	  };
+  });
+};
+
+function update_logs() {
+  var current_log = localStorage.getItem('current_log');
+  if (current_log != 'null') {
+    show_logs(current_log);
+  }
+}
+
+function update_jobs() {
+  $.getJSON( "/jobs", function(jobs) {
+    jQuery('#jobs-panel').empty();
+
+    var panel = document.getElementsByTagName('jobs-panel');
+    panel.innerHTML = '<h1>Jobs</h1>'
+
+    var tbl = document.createElement('table');
+
+    var thd = document.createElement('thead');
+    thd.innerHTML = '<tr><th>Created</th><th>Command</th><th>Status</th><th>ID</th></tr>';
+
+		tbl.appendChild(thd);
+
+    for (var i in jobs) {
+      job = jobs[i]
+
+      var row = document.createElement('tr');
+
+			var created = document.createElement('td');
+			created.innerHTML = job['created']
+			row.appendChild(created);
+
+			var command = document.createElement('td');
+      if (job['args'] != 'None') {
+			  command.innerHTML = job['name'] + ' ' + job['args'] 
+			} else {
+			  command.innerHTML = job['name']
+			}
+			row.appendChild(command);
+
+			var status = document.createElement('td');
+			status.innerHTML = job['status']
+      if (job['status'] == 'pending') {
+				status.className = 'yellow';
+				status.innerHTML += ' <a href="javascript:do_confirm(\'' + job['id'] + '\')">confirm</a>';
+			}
+      if (job['status'] == 'running') {
+				status.className = 'green'
+			}
+      row.appendChild(status);
+
+      var id = document.createElement('td');
+			var idtrunc = job['id'].splice(0,21)
+      id.innerHTML = idtrunc + ' <a href="javascript:show_logs(\'' + job['id'] + '\')">logs</a>';
+			row.appendChild(id);
+
+      tbl.appendChild(row);
+    }
+  
+//  panel.appendChild(tbl);
+  jQuery("#jobs-panel").append(tbl);
+  });
+}
+
+  </script>
+  <script>
+  $(document).ready(function() {
+    update_jobs();
+		setInterval(update_jobs, 3000);
+		setInterval(update_logs, 5000);
+    localStorage.setItem('current_log', 0);
+    $(document.body).on("click","#msgbox",function(){
+      jQuery('#msgbox').hide();
+      $('#msgbox').undim();
+    });
+  });
+  </script>
+  </head>
+  <body>
+	<div id="header"> v{{ version }}</div>
+  <div id="line"></div>
+  <div id="wrap">
+    <div id="actions-panel">
+      <table>
+        <tr><th>Actions</th></tr>
+        <tr><td>
+          <form id="createjob">
+            <div class="input">
+            <label>Create Job:</label>
+              <select name="action">
+                {% for action in actions %}
+                <option value="{{ action['name'] }}">{{ action['name'] }}</option>
+                {% endfor %}
+              </select>
+              <input type="submit">
+            </div>
+        </td></tr>
+        <tr><td>
+          <div class="input">
+            <label>Arguments: </label>
+            <input type="text" name="action_args">
+          </div>
+          </form>
+        </td></tr>
+      </table>
+    </div>
+    <div id="logs-panel">
+      <table>
+        <tr><th>Logs</th></tr>
+      </table>
+    </div>
+    <div id="jobs-panel"></div>
+	</div>
+  <div id="msgbox"></div>
+  </body>
+</html>
