@@ -19,7 +19,7 @@ resource_map = { mvresources.Jobs    : '/jobs',
                  mvresources.Action  : '/actions/<string:action_name>' }
 
 class MultivacApi(object):
-    def __init__(self, redis_host, redis_port):
+    def __init__(self, redis_host, redis_port, debug=False):
         app_dir =  os.path.dirname(os.path.realpath(__file__))
         static_dir = app_dir + '/static'
         template_dir = app_dir + '/templates'
@@ -29,6 +29,7 @@ class MultivacApi(object):
                          static_folder=static_dir)
         self.api = Api(self.app)
 
+        self.app.config['DEBUG'] = debug
         self.app.config['db'] = JobsDB(redis_host, redis_port)
 
         for resource,path in resource_map.items():
@@ -43,10 +44,6 @@ class MultivacApi(object):
                                    version=version)
 
     def start_server(self, listen_port=8000):
-        print(('Starting Multivac API v%s' % version))
+        print('Starting Multivac API v%s' % version)
         http_server = WSGIServer(('', listen_port), self.app)
         http_server.serve_forever()
-
-if __name__ == "__main__":
-    self.app.logger.info('Starting multivac v%s' % version)
-    self.app.run(host='localhost', port=8000, debug=True)

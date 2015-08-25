@@ -5,9 +5,10 @@ from argparse import ArgumentParser
 
 from multivac.version import version
 
+log = logging.getLogger('multivac')
+
 subcommands = [ 'worker', 'slackbot', 'api' ]
-#defaults
-config = { 'api_listen_port' : 8000,
+config = { 'api_listen_port' : 8000, #defaults
            'slack_token' : None,
            'redis': '127.0.0.1:6379' }
 
@@ -26,11 +27,11 @@ def main():
     args = parser.parse_args()
 
     if args.d:
-        log = logging.getLogger('multivac')
+        debug = True
         logging.basicConfig(level=logging.DEBUG)
         log.debug('Debug logging enabled')
     else:
-        log = logging.getLogger('multivac')
+        debug = False
         logging.basicConfig(level=logging.WARN)
 
     try:
@@ -48,7 +49,7 @@ def main():
 
     if args.subcommand == 'api':
         from multivac.api import MultivacApi
-        api = MultivacApi(redis_host,redis_port)
+        api = MultivacApi(redis_host, redis_port, debug=debug)
 
         api.start_server(listen_port=config['api_listen_port'])
 
