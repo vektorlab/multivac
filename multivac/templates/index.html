@@ -128,7 +128,7 @@
           max-width: 200px;
 			}
 			
-			table tr:hover {
+			table td:hover {
 			    background-color: #fff;
 			}
 
@@ -142,6 +142,10 @@
 
 	</style>
   <script>
+String.prototype.splice = function (index, count, add) {
+	return this.slice(0, index) + (add || "") + this.slice(index + count);
+};
+
 function show_msg(text) {
     var newdiv = $('<div id="msgbox">' + text  + '</div>').hide();
     $('#msgbox').replaceWith(newdiv);
@@ -198,7 +202,8 @@ function show_logs(job_id) {
       var tbl = document.createElement('table');
 
       var thd = document.createElement('thead');
-      thd.innerHTML = '<tr><th>Logs(' + job_id + ')</th></tr>';
+			var idtrunc = job['id'].splice(0,21)
+      thd.innerHTML = '<tr><th>Logs(' + idtrunc + ')</th></tr>';
 
       tbl.appendChild(thd);
 
@@ -269,7 +274,8 @@ function update_jobs() {
       row.appendChild(status);
 
       var id = document.createElement('td');
-      id.innerHTML = '<a href="javascript:show_logs(\'' + job['id'] + '\')">logs</a>';
+			var idtrunc = job['id'].splice(0,21)
+      id.innerHTML = idtrunc + ' <a href="javascript:show_logs(\'' + job['id'] + '\')">logs</a>';
 			row.appendChild(id);
 
       tbl.appendChild(row);
@@ -286,6 +292,7 @@ function update_jobs() {
     update_jobs();
 		setInterval(update_jobs, 3000);
 		setInterval(update_logs, 5000);
+    localStorage.setItem('current_log', 0);
     $(document.body).on("click","#msgbox",function(){
       jQuery('#msgbox').hide();
       $('#msgbox').undim();
