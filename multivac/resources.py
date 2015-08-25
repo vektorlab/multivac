@@ -29,7 +29,7 @@ def invalid_resource():
 
 class Version(Resource):
     def get(self):
-        return { 'Multivac API' : 'v%s' % version },200
+        return { 'version' : 'v%s' % version },200
 
 class Confirm(Resource):
     def post(self, job_id):

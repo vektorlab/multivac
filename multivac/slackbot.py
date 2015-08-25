@@ -59,8 +59,8 @@ class SlackBot(object):
             if not workers:
                 self._reply(event, 'no registered workers')
             else:
-                msg = [ k + ':' + v for k,v in workers.items() ]
-                self._reply(event, '\n'.join(msg), code=True)
+                msg = [ ('%s(%s)' % (w['name'],w['host'])) for w in workers ]
+                self._reply(event, '\n'.join(msg), codeblock=True)
 
         elif command == 'jobs':
             subcommands = [ 'pending', 'running', 'completed', 'all' ]

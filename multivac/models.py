@@ -167,13 +167,14 @@ class JobsDB(object):
     #######
     def register_worker(self, name, hostname):
         key = self._workerkey(name)
+        worker = { 'name': name, 'host': hostname }
 
-        self.redis.set(key, hostname)
+        self.redis.hmset(key, worker)
         self.redis.expire(key, 15)
 
     def get_workers(self):
-        return { k : self.redis.get(k) \
-                for k in  self.redis.keys(pattern=self._workerkey('*')) }
+        return [ self.redis.hgetall(k) for k in \
+                 self.redis.keys(pattern=self._workerkey('*')) ]
 
     #######
     # Keyname Methods 
