@@ -54,7 +54,7 @@ def main():
 
     if args.subcommand == 'worker':
         from multivac.worker import JobWorker
-        w = JobWorker(redis_host, redis_port)
+        w = JobWorker(redis_host, redis_port, args.config_path)
 
     if args.subcommand == 'slackbot':
         if not config['slack_token']:

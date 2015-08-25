@@ -18,7 +18,7 @@ from multivac.models import JobsDB
 log = logging.getLogger('multivac')
 
 class JobWorker(object):
-    def __init__(self, redis_host, redis_port, config_path='config.yml'):
+    def __init__(self, redis_host, redis_port, config_path):
         self.config_path = config_path
         self.db = JobsDB(redis_host, redis_port)
 
