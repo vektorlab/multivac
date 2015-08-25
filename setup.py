@@ -10,6 +10,8 @@ setup(name='multivac',
       author_email='bradley.cicenas@gmail.com',
       url='https://github.com/bcicen/multivac',
       install_requires=['slacksocket>=0.5.1'],
+      package_data={'multivac': ['templates/*', 'static/*']},
+      include_package_data=True,
       license='http://opensource.org/licenses/MIT',
       classifiers=(
           'License :: OSI Approved :: MIT License ',
