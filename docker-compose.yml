@@ -1,0 +1,28 @@
+worker:
+  image: multivac:latest
+  command: "worker"
+  links:
+    - redis:redis
+  volumes:
+    - /path/to/config.yml:/etc/multivac.yml
+
+api:
+  image: multivac:latest
+  command: "api"
+  links:
+    - redis:redis
+  volumes:
+    - /path/to/config.yml:/etc/multivac.yml
+
+slackbot:
+  image: multivac:latest
+  command: "slackbot"
+  links:
+    - redis:redis
+  volumes:
+    - /path/to/config.yml:/etc/multivac.yml
+
+redis:
+  image: redis:2.8
+  expose:
+    - "6379"
