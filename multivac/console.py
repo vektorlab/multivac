@@ -2,7 +2,7 @@ import sys
 from termcolor import colored
 
 from multivac.version import version
-from multivac.models import JobsDB
+from multivac.db import JobsDB
 from multivac.util import format_time
 
 class Console(object):

@@ -6,7 +6,7 @@ from gevent.wsgi import WSGIServer
 from redis import StrictRedis
 
 from multivac.version import version
-from multivac.models import JobsDB
+from multivac.db import JobsDB
 import multivac.resources as mvresources
 
 resource_map = { mvresources.Jobs    : '/jobs',

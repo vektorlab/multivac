@@ -13,7 +13,7 @@ from threading import Thread
 from copy import deepcopy
 
 from multivac.util import unix_time
-from multivac.models import JobsDB
+from multivac.db import JobsDB
 
 log = logging.getLogger('multivac')
 

@@ -4,7 +4,7 @@ import logging
 from time import sleep
 from threading import Thread
 
-from multivac.models import JobsDB
+from multivac.db import JobsDB
 from multivac.util import format_time
 
 log = logging.getLogger('multivac')
