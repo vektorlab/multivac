@@ -1,7 +1,8 @@
 import logging
 
 from slacksocket import SlackSocket
-from chatbot import ChatBot
+
+from multivac.chatbot import ChatBot
 
 log = logging.getLogger('multivac')
 
