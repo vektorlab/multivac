@@ -8,9 +8,6 @@ from time import sleep
 from threading import Thread
 from slacksocket import SlackSocket
 
-from multivac.models import JobsDB
-from multivac.util import format_time
-
 log = logging.getLogger('multivac')
 
 class SlackBot(object):
@@ -20,8 +17,6 @@ class SlackBot(object):
     """
     def __init__(self, slack_token, redis_host, redis_port, concurrency=5):
         print('Starting Slackbot')
-
-        self.db  = JobsDB(redis_host, redis_port)
 
         self.slacksocket = SlackSocket(slack_token)
         self.me = self.slacksocket.user
