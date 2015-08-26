@@ -145,7 +145,7 @@ class ChatBot(object):
             formatted.append('%s %s(%s) %s' % \
                         (created, j['id'], j['name'], j['status']))
 
-            return formatted
+        return formatted
 
     def _help(self, args):
         actions = self.db.get_actions()
