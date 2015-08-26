@@ -1,46 +1,69 @@
+import abc
+import logging
+
+from time import sleep
+from threading import Thread
+
 from multivac.models import JobsDB
 from multivac.util import format_time
 
+log = logging.getLogger('multivac')
+
 class ChatBot(object):
     """
-    Generic interface for chatbots 
+    Generic base class for chatbots. Subclasses must provide 
+    a reply method and a messages generator
     """
     def __init__(self, redis_host, redis_port):
         self.db  = JobsDB(redis_host, redis_port)
+        self.builtins = { 'confirm' : self._confirm,
+                          'workers' : self._workers,
+                          'jobs'    : self._jobs,
+                          'help'    : self._help }
+        self.message_queue = []
 
-    def read_msg(self, text, user=None, channel=None):
+        t = Thread(target=self._message_worker)
+        t.daemon = True
+        t.start()
+
+    @abc.abstractmethod
+    def reply(self, text, channel):
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def messages(self):
+        """
+        Generator yielding message tuples
+        in the form (text,user,channel)
+        """
+        raise NotImplementedError
+
+    def _message_worker(self):
+        for msg in self.messages():
+            self._process_msg(*msg)
+
+    def _process_msg(self, text, user, channel):
         """
         """
         command,args = self._parse_command(text)
-
-        if command == 'confirm':
-            ok,reason = self._confirm_job(args)
-            return reason
-
-        elif command == 'workers':
-            return self._get_workers()
-
-        elif command == 'jobs':
-            return self._get_jobs()
-
+        
+        if command in self.builtins:
+            self.reply(self.builtins[command](args), channel)
         else:
             ok,result = self.db.create_job(command, args=args, initiator=user)
             if not ok:
-                return result
+                self.reply(result, channel)
+                return
 
             job_id = result
             log.info('Created job %s' % job_id)
 
             if self.db.get_job(job_id)['status'] == 'pending':
-                self._reply(event, '%s needs confirmation' % str(job_id))
+                self.reply('%s needs confirmation' % str(job_id), channel)
 
-            t = Thread(target=self._output_handler,args=(event, job_id))
+            t = Thread(target=self._output_handler,args=(job_id, channel))
             t.daemon = True
             t.start()
-
-
-    def send_msg(self, text):
-        pass
 
     @staticmethod
     def _parse_command(text):
@@ -53,15 +76,14 @@ class ChatBot(object):
 
         return cmd, args
 
-    def _output_handler(self, event, job_id, stream=True):
+    def _output_handler(self, job_id, channel, stream=True):
         """
-        Worker to post the output of a given job_id to Slack
+        Worker to send the output of a given job_id to a given channel
         params:
          - stream(bool): Toggle streaming output as it comes in
            vs posting when a job finishes. Default False.
         """
         active = False
-        completed = False
         prefix = '[%s]' % job_id
 
         #sleep on jobs awaiting confirmation
@@ -72,39 +94,42 @@ class ChatBot(object):
             else:
                 sleep(1)
 
-        self._reply(event, '%s running' % str(job_id), code=True)
+        self.reply('%s running' % str(job_id), channel)
 
         if stream:
             for line in self.db.get_log(job_id):
-                self._reply(event, prefix + line, code=True)
+                self.reply(prefix + line, channel)
         else:
             msg = ''
             for line in self.db.get_log(job_id):
                 msg += prefix + line + '\n'
+            self.reply(msg, channel)
 
-            self._reply(event, msg, code=True)
+        self.reply(prefix + ' Done', channel)
 
-        self._reply(event, prefix + ' Done', code=True)
+    ######
+    # Builtin command methods
+    ######
 
-    def _confirm_job(self, job_id):
-        job = self.db.get_job(job_id)
+    def _confirm(self, arg):
+        job = self.db.get_job(arg)
         if not job:
-            return (False, 'no such job id')
+            return 'no such job id'
         if job['status'] != 'pending':
-            return (False, 'job not awaiting confirm')
+            return 'job not awaiting confirm'
 
         self.db.update_job(job_id, 'status', 'ready')
 
-        return (True,'confirmed job: %s' % job_id)
+        return 'confirmed job: %s' % job_id
 
-    def _get_workers(self):
+    def _workers(self, arg):
         workers = self.db.get_workers()
         if not workers:
             return 'no registered workers'
         else:
             return [ ('%s(%s)' % (w['name'],w['host'])) for w in workers ]
 
-    def _get_jobs(self, arg):
+    def _jobs(self, arg):
         subcommands = [ 'pending', 'running', 'completed', 'all' ]
         if arg not in subcommands:
             return 'argument must be one of %s' % ','.join(subcommands)
@@ -121,3 +146,11 @@ class ChatBot(object):
                         (created, j['id'], j['name'], j['status']))
 
             return formatted
+
+    def _help(self, args):
+        actions = self.db.get_actions()
+
+        builtin_cmds = [ 'Builtin commands:' ] + [ c for c in self.builtins ] 
+        action_cmds = [ 'Action commands:' ] + [ a['name'] for a in actions ]
+
+        return builtin_cmds + action_cmds
