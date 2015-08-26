@@ -18,11 +18,12 @@
       #header {
         width: 100%;
         height: 55px;
+        color: #9F9F9F;
         background-image: url(/static/multivac.png);
         background-repeat: no-repeat;
         background-position: 20px 5px;
-			  text-align: right;
-				margin-left: -10px;
+        text-align: right;
+        margin-left: -10px;
       }
 
       #line {
@@ -202,7 +203,7 @@ function show_logs(job_id) {
       var tbl = document.createElement('table');
 
       var thd = document.createElement('thead');
-			var idtrunc = job['id'].splice(0,21)
+			var idtrunc = job_id.splice(0,21)
       thd.innerHTML = '<tr><th>Logs(' + idtrunc + ')</th></tr>';
 
       tbl.appendChild(thd);
@@ -221,6 +222,17 @@ function show_logs(job_id) {
       localStorage.setItem('current_log_length', logs.length);
       console.log('updated logs')
 	  };
+  });
+};
+
+
+function update_header() {
+	$.getJSON( "/version", function(data) {
+    var header = document.getElementById('header');
+		header.innerHTML = data.version + '<br>';
+    $.getJSON( "/workers", function(workers) {
+		  header.innerHTML += workers.length + ' online workers';
+	  });
   });
 };
 
@@ -289,10 +301,11 @@ function update_jobs() {
   </script>
   <script>
   $(document).ready(function() {
+    update_header();
     update_jobs();
 		setInterval(update_jobs, 3000);
 		setInterval(update_logs, 5000);
-    localStorage.setItem('current_log', 0);
+    localStorage.setItem('current_log', null);
     $(document.body).on("click","#msgbox",function(){
       jQuery('#msgbox').hide();
       $('#msgbox').undim();
