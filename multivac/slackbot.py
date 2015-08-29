@@ -21,6 +21,7 @@ class SlackBot(ChatBot):
 
         super().__init__(redis_host, redis_port)  
 
+    @property
     def messages(self):
         for event in self.slacksocket.events():
             log.debug('saw event %s' % event.json)
@@ -29,7 +30,7 @@ class SlackBot(ChatBot):
 
     def reply(self, msg, channel):
         #skip any empty messages
-        if not msg:
+        if not msg or msg == 'EOF':
             return
 
         #make codeblock if message is multiline

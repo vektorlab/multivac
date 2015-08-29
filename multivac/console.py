@@ -1,78 +1,59 @@
 import sys
+from time import sleep
 from termcolor import colored
 
+from multivac.chatbot import ChatBot
 from multivac.version import version
-from multivac.db import JobsDB
 from multivac.util import format_time
 
-class Console(object):
-    def __init__(self):
+class ConsoleBot(ChatBot):
+    def __init__(self, redis_host, redis_port):
         self.prompt = colored('multivac> ','cyan',attrs=['bold']) 
-        self.db = JobsDB('localhost', 6379)
+        self.resprompt = colored('> ','red',attrs=['bold'])
+        self._messages =  []
+        self._wait = False
 
-        self.commands = { 'jobs'    : self.jobs, 
-                          'logs'    : self.logs, 
-                          'actions' : self.actions,
-                          'exit'    : self.exit }
-        
+        super().__init__(redis_host, redis_port)
         self.run()
 
-    def run(self):
-        print('Multivac version %s' % (version))        
+    @property
+    def messages(self):
         while True:
-            cmdline = input(self.prompt).split(' ')
-            cmd = cmdline.pop(0)
-            args = ' '.join(cmdline)
+            try:
+                yield self._messages.pop(0)
+            except IndexError:
+                sleep(.1)
 
-            if cmd not in self.commands:
-                print('invalid command: %s' % (cmd))
-            else:
-                if args:
-                    self.commands[cmd](args)
-                else:
-                    self.commands[cmd]()
-
-    def jobs(self):
-        jobs = self.db.get_jobs()
-        for j in jobs:
-            created = format_time(j['created'])
-
-            if j['status'] == 'completed':
-                status = colored(j['status'], 'green')
-            elif j['status'] == 'pending':
-                status = colored(j['status'], 'yellow')
-            else:
-                status = j['status']
-
-            print('%s %s(%s) %s' % (created, j['id'], j['name'], status))
-
-    def logs(self, job_id):
-        jobs = self.db.get_jobs()
-        if job_id not in [ j['id'] for j in jobs ]:
-            print(colored('no such job: %s' % job_id, 'red'))
+    def reply(self, msg, channel):
+        if msg == 'EOF':
+            self._wait = False
             return
+        if isinstance(msg, list):
+            [ self._output(l) for l in msg ]
+        else:
+            self._output(msg)
 
-        print('\n'.join(self.db._get_stored_log(job_id)))
+    def run(self):
+        print('Multivac version %s' % (version))
+        while True:
+            cmdline = input(self.prompt)
+            if cmdline.split(' ')[0] == 'exit':
+                sys.exit(0)
 
+            self._messages.append((cmdline,'console','console'))
+            self._wait = True
 
-    def actions(self):
-        actions = self.db.get_actions()
+            while self._wait:
+                sleep(.1)
 
-        output = [ ['Name','Command','Confirm Required'] ]
+    def _output(self, text):
+        print(self.resprompt + text)
 
-        for a in actions:
-            name = colored(a['name'], 'white', attrs=['bold'])
-            output.append([a['name'], a['cmd'], a['confirm_required']])
-
-        self._print_column(output)
-
-    def exit(self):
-        sys.exit(0)
-
-    def _print_column(self, data, has_header=True):
+    @staticmethod
+    def _print_column(data, has_header=True):
         col_width = max(len(word) for row in data for word in row) + 2
         for row in data:
             print(''.join(word.ljust(col_width) for word in row))
 
 if __name__ == '__main__':
-    c = Console()
+    c = ConsoleBot('localhost', 6379)

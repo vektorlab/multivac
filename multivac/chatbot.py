@@ -12,7 +12,7 @@ log = logging.getLogger('multivac')
 class ChatBot(object):
     """
     Generic base class for chatbots. Subclasses must provide 
-    a reply method and a messages generator
+    a reply method and a messages property generator
     """
     def __init__(self, redis_host, redis_port):
         self.db  = JobsDB(redis_host, redis_port)
@@ -39,7 +39,7 @@ class ChatBot(object):
         raise NotImplementedError
 
     def _message_worker(self):
-        for msg in self.messages():
+        for msg in self.messages:
             self._process_msg(*msg)
 
     def _process_msg(self, text, user, channel):
@@ -49,10 +49,12 @@ class ChatBot(object):
         
         if command in self.builtins:
             self.reply(self.builtins[command](args), channel)
+            self.reply('EOF', channel)
         else:
             ok,result = self.db.create_job(command, args=args, initiator=user)
             if not ok:
                 self.reply(result, channel)
+                self.reply('EOF', channel)
                 return
 
             job_id = result
@@ -60,6 +62,7 @@ class ChatBot(object):
 
             if self.db.get_job(job_id)['status'] == 'pending':
                 self.reply('%s needs confirmation' % str(job_id), channel)
+                self.reply('EOF', channel)
 
             t = Thread(target=self._output_handler,args=(job_id, channel))
             t.daemon = True
@@ -93,6 +96,7 @@ class ChatBot(object):
                 active = True
             else:
                 sleep(1)
+                return
 
         self.reply('%s running' % str(job_id), channel)
 
@@ -105,7 +109,7 @@ class ChatBot(object):
                 msg += prefix + line + '\n'
             self.reply(msg, channel)
 
-        self.reply(prefix + ' Done', channel)
+        self.reply('EOF', channel)
 
     ######
     # Builtin command methods
