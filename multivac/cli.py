@@ -50,8 +50,11 @@ def main():
     if args.subcommand == 'api':
         from multivac.api import MultivacApi
         api = MultivacApi(redis_host, redis_port, debug=debug)
-
         api.start_server(listen_port=config['api_listen_port'])
+
+    if args.subcommand == 'console':
+        from multivac.console import ConsoleBot
+        c = ConsoleBot(redis_host, redis_port)
 
     if args.subcommand == 'worker':
         from multivac.worker import JobWorker
