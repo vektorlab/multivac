@@ -7,7 +7,7 @@ from multivac.version import version
 
 log = logging.getLogger('multivac')
 
-subcommands = [ 'worker', 'slackbot', 'api' ]
+subcommands = [ 'worker', 'slackbot', 'api' , 'console' ]
 config = { 'api_listen_port' : 8000, #defaults
            'slack_token' : None,
            'redis': '127.0.0.1:6379' }

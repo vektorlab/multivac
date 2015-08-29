@@ -19,6 +19,7 @@ class ChatBot(object):
         self.builtins = { 'confirm' : self._confirm,
                           'workers' : self._workers,
                           'jobs'    : self._jobs,
+                          'logs'    : self._logs,
                           'help'    : self._help }
         self.message_queue = []
 
@@ -88,6 +89,7 @@ class ChatBot(object):
         """
         active = False
         prefix = '[%s]' % job_id
+        log.debug('output handler spawned for job %s' % job_id)
 
         #sleep on jobs awaiting confirmation
         while not active:
@@ -96,7 +98,6 @@ class ChatBot(object):
                 active = True
             else:
                 sleep(1)
-                return
 
         self.reply('%s running' % str(job_id), channel)
 
@@ -150,6 +151,12 @@ class ChatBot(object):
                         (created, j['id'], j['name'], j['status']))
 
         return formatted
+
+    def _logs(self, args):
+        if not self.db.get_job(args):
+            return 'no matching jobs found'
+
+        return self.db._get_stored_log(args)
 
     def _help(self, args):
         actions = self.db.get_actions()

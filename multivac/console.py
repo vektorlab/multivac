@@ -36,7 +36,10 @@ class ConsoleBot(ChatBot):
     def run(self):
         print('Multivac version %s' % (version))
         while True:
-            cmdline = input(self.prompt)
+            try:
+                cmdline = input(self.prompt)
+            except EOFError:
+                sys.exit(0)
             if cmdline.split(' ')[0] == 'exit':
                 sys.exit(0)
 
