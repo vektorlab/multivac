@@ -16,7 +16,8 @@ cp -v sample_config.yml config.yml
 ```
 
 Create a token for Multivac under "Bots" in the integration section of Slack.
-update config.yml with your Slack token and update docker-compose.yml with your config path:
+
+Update config.yml with your Slack token and update docker-compose.yml with your config path:
 ```bash
 sed "s|/path/to|$(pwd)|g" docker-compose.yml
 ```
@@ -25,32 +26,8 @@ and bring up the container stack:
 docker-compose up
 ```
 
-That's it! You're ready to start talking to Multivac. Invite Multivac to your channel and type "@multivac: help" to get available commands. Navigate to http://localhost:8000 to view the real-time dashboard.
+That's it! You're ready to start talking to Multivac.
 
-# Running
+Invite Multivac to your channel and type "@multivac: help" to get available commands. Navigate to http://localhost:8000 to view the real-time dashboard.
 
-Multivac has three components to launch:
-
-## Job Worker
-
-Performs jobs, collecting and storing their output
-
-```
-multivac -c /path/to/config.yml worker
-```
-
-## Slackbot
-
-Connects to Slacks Real Time Streaming websocket and watches for mentions, adding predefined jobs to the queue and streaming their output back to Slack.
-
-```
-multivac -c /path/to/config.yml slackbot
-```
-
-## API
-
-RESTful API that can be used to create and view jobs and their respective logs. Also provides the web interface.
-
-```
-multivac -c /path/to/config.yml api
-```
+Full docs are available [here](http://bcicen.github.io/multivac_www/)
