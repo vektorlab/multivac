@@ -30,4 +30,4 @@ That's it! You're ready to start talking to Multivac.
 
 Invite Multivac to your channel and type "@multivac: help" to get available commands. Navigate to http://localhost:8000 to view the real-time dashboard.
 
-Full docs are available [here](http://bcicen.github.io/multivac_www/)
+Full docs are available [here](http://multivac.vektor.nyc/)
