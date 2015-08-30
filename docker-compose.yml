@@ -13,6 +13,8 @@ api:
     - redis:redis
   volumes:
     - /path/to/config.yml:/etc/multivac.yml
+  ports:
+    - "8000:8000"
 
 slackbot:
   image: multivac:latest

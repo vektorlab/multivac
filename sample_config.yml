@@ -1,5 +1,5 @@
 #global config
-redis: "127.0.0.1:6379"
+redis: "redis:6379"
 actions:
   - name: echo
     cmd: /bin/echo
