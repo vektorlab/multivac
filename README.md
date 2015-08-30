@@ -6,22 +6,30 @@
 
 A ChatOps bot for Slack with a integrated job queue and RESTful API
 
-# Installing
+# Quickstart
 
+To get started quickly using Docker:
 ```bash
 git clone https://github.com/bcicen/multivac.git
 cd multivac
-pip3 install -r requirements.txt
-python3 setup.py install
+cp -v sample_config.yml config.yml
 ```
 
-# Config
+Create a token for Multivac under "Bots" in the integration section of Slack.
+update config.yml with your Slack token and update docker-compose.yml with your config path:
+```bash
+sed "s|/path/to|$(pwd)|g" docker-compose.yml
+```
+and bring up the container stack:
+```bash
+docker-compose up
+```
 
-See sample_config.yml for reference
+That's it! You're ready to start talking to Multivac. Invite Multivac to your channel and type "@multivac: help" to get available commands. Navigate to http://localhost:8000 to view the real-time dashboard.
 
 # Running
 
-Multivac has three components:
+Multivac has three components to launch:
 
 ## Job Worker
 
@@ -41,7 +49,7 @@ multivac -c /path/to/config.yml slackbot
 
 ## API
 
-RESTful API that can be used to create and view jobs and their respective logs
+RESTful API that can be used to create and view jobs and their respective logs. Also provides the web interface.
 
 ```
 multivac -c /path/to/config.yml api
