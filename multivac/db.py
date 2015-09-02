@@ -11,7 +11,7 @@ from multivac.util import unix_time
 log = logging.getLogger('multivac')
 
 class JobsDB(object):
-    self.prefix = { 'job' : 'multivac_job',
+    prefix = { 'job' : 'multivac_job',
                     'log' : 'multivac_log',
                     'action' : 'multivac_action',
                     'worker' : 'multivac_worker' }
