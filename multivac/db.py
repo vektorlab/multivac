@@ -21,7 +21,7 @@ class JobsDB(object):
                 host=redis_host,
                 port=redis_port,
                 decode_responses=True)
-        self.sub = self.redis.pubsub(ignore_subscribe_messages=True)
+        self.subs = {}
 
         #TODO: add connection test with r.config_get('port')
 
@@ -53,7 +53,10 @@ class JobsDB(object):
         else:
             job['status'] = 'ready'
 
-        self.sub.subscribe(self._logkey(job['id']))
+        sub = self.redis.pubsub(ignore_subscribe_messages=True)
+        sub.subscribe(self._logkey(job['id']))
+        self.subs[job['id']] = sub
+
         log.debug('Subscribed to log channel: %s' % self._logkey(job['id']))
 
         if initiator:
@@ -67,13 +70,23 @@ class JobsDB(object):
         """
         Update an arbitrary field for a job
         """
-        #if marking job completed, unsubscribe from log channel
-        if field == 'status' and value == 'completed':
-            if self._logkey(job_id) in self.sub.channels:
-                self.sub.unsubscribe(key)
-                log.debug('Unsubscribed from log channel: %s' % key)
         self.redis.hset(self._jobkey(job_id), field, value)
         return (True, )
+
+    def cleanup_job(self, job_id):
+        """
+        Cleanup log subscriptions for a given job id and mark completed
+        """
+        #send EOF signal to streaming clients
+        self.redis.publish(self._logkey(job_id), 'EOF')
+
+        if job_id in self.subs:
+            self.subs[job_id].unsubscribe()
+            del self.subs[job_id]
+            log.debug('Unsubscribed from log channel: %s' % \
+                      self.logkey(job_id))
+
+        self.update_job(job_id, 'status', 'completed')
 
     def get_job(self, job_id):
         """
@@ -102,7 +115,7 @@ class JobsDB(object):
 
         if not job:
             return (False, 'no such job id')
-        
+
         if job['status'] == 'completed':
             return self.get_stored_log(job_id)
         else:
@@ -114,14 +127,13 @@ class JobsDB(object):
         until the job has completed 
         """
         key = self._logkey(job_id)
+        sub = self.subs[job_id]
 
-        for msg in self.sub.listen():
-            if msg['channel'] == key:
-                # unsubscribe from channel and return upon job completion
-                if str(msg['data']) == 'EOF': 
-                    break
-                else:
-                    yield msg['data']
+        for msg in sub.listen():
+            if str(msg['data']) == 'EOF':
+                break
+            else:
+                yield msg['data']
 
     def get_stored_log(self, job_id):
         """
@@ -140,9 +152,6 @@ class JobsDB(object):
 
         self.redis.publish(key, prefixed_line)
         self.redis.lpush(key, prefixed_line)
-
-    def end_job_log(self, job_id):
-        self.redis.publish(self._logkey(job_id), 'EOF')
 
     def _append_ts(self, msg):
         ts = datetime.utcnow().strftime('%a %b %d %H:%M:%S %Y')

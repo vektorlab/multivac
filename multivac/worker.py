@@ -43,10 +43,9 @@ class JobWorker(object):
             pids = deepcopy(self.pids)
             for job_id,pid in pids.items():
                 if not self._is_running(pid):
-                    self.db.update_job(job_id, 'status', 'completed')
-                    log.info('Collected ended job %s' % job_id)
-                    print('completed job %s' % job['id'])
+                    self.db.cleanup_job(job_id)
                     del self.pids[job_id]
+                    print('completed job %s' % job['id'])
 
             sleep(2)
 
@@ -123,9 +122,9 @@ class JobWorker(object):
                 error = self._sanitize(error)
                 self.db.append_job_log(job_id, error)
                 log.debug('%s-STDOUT: %s' % (job_id,error))
+
+            #exit when job has been collected
             if job_id not in self.pids:
-                #exit when job has been collected
-                self.db.end_job_log(job_id)
                 log.debug('Log handler stopped for job %s' % job_id)
                 return
 
