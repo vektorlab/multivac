@@ -67,6 +67,11 @@ class JobsDB(object):
         """
         Update an arbitrary field for a job
         """
+        #if marking job completed, unsubscribe from log channel
+        if field == 'status' and value == 'completed':
+            if self._logkey(job_id) in self.sub.channels:
+                self.sub.unsubscribe(key)
+                log.debug('Unsubscribed from log channel: %s' % key)
         self.redis.hset(self._jobkey(job_id), field, value)
         return (True, )
 
@@ -89,14 +94,21 @@ class JobsDB(object):
             return [ j for j in jobs ]
 
     def get_log(self, job_id):
-        #return stored log if we're no longer subscribed
-        if self._logkey(job_id) not in self.sub.channels:
-            return self._get_stored_log(job_id)
-        #otherwise return streaming log generator
-        else:
-            return self._get_logstream(job_id)
+        """
+        Return stored log for a given job id if finished,
+        otherwise return streaming log generator
+        """
+        job = self.get_job(job_id)
 
-    def _get_logstream(self, job_id):
+        if not job:
+            return (False, 'no such job id')
+        
+        if job['status'] == 'completed':
+            return self.get_stored_log(job_id)
+        else:
+            return self.get_logstream(job_id)
+
+    def get_logstream(self, job_id):
         """
         Returns a generator object to stream all job output
         until the job has completed 
@@ -107,13 +119,11 @@ class JobsDB(object):
             if msg['channel'] == key:
                 # unsubscribe from channel and return upon job completion
                 if str(msg['data']) == 'EOF': 
-                    self.sub.unsubscribe(key)
-                    log.debug('Unsubscribed from log channel: %s' % key)
                     break
                 else:
                     yield msg['data']
 
-    def _get_stored_log(self, job_id):
+    def get_stored_log(self, job_id):
         """
         Return the stored output of a given job id
         """

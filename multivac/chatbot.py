@@ -156,7 +156,7 @@ class ChatBot(object):
         if not self.db.get_job(args):
             return 'no matching jobs found'
 
-        return self.db._get_stored_log(args)
+        return self.db.get_stored_log(args)
 
     def _help(self, args):
         actions = self.db.get_actions()

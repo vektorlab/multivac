@@ -91,7 +91,7 @@ class Logs(Resource):
                 yield l + '\n'
 
         if args['json']:
-           return [ l for l in db._get_stored_log(job_id) ],200
+           return [ l for l in db.get_stored_log(job_id) ],200
 
         logstream = db.get_log(job_id)
         return Response(stream_with_context(stream(logstream)))
