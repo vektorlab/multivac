@@ -12,9 +12,9 @@ log = logging.getLogger('multivac')
 
 class JobsDB(object):
     prefix = { 'job' : 'multivac_job',
-                    'log' : 'multivac_log',
-                    'action' : 'multivac_action',
-                    'worker' : 'multivac_worker' }
+               'log' : 'multivac_log',
+               'action' : 'multivac_action',
+               'worker' : 'multivac_worker' }
 
     def __init__(self, redis_host, redis_port):
         self.redis = StrictRedis(
