@@ -9,8 +9,8 @@ import names
 
 from time import sleep
 from redis import StrictRedis
-from threading import Thread
 from copy import deepcopy
+from concurrent.futures import ThreadPoolExecutor
 
 from multivac.util import unix_time
 from multivac.db import JobsDB
@@ -19,13 +19,14 @@ log = logging.getLogger('multivac')
 
 class JobWorker(object):
     def __init__(self, redis_host, redis_port, config_path):
+        self.pids = {} #dict of job_id:subprocess object
         self.config_path = config_path
         self.db = JobsDB(redis_host, redis_port)
 
-        self.pids = {} #dict of job_id:subprocess object
-
         self._load_actions()
         self.name = self._get_name()
+
+        self.executor = ThreadPoolExecutor(max_workers=10)
 
         self.run()
 
@@ -37,7 +38,7 @@ class JobWorker(object):
 
             #spawn ready jobs
             for job in self.db.get_jobs(status='ready'):
-                self._start_job(job)
+                self.executor.submit(self._job_worker, job)
 
             #collect ended processes
             pids = deepcopy(self.pids)
@@ -69,13 +70,6 @@ class JobWorker(object):
             self.db.add_action(action)
             log.info('loaded action %s' % (action['name']))
 
-    def _start_job(self, job):
-        worker = Thread(target=self._job_worker,args=[job])
-        worker.daemon = True
-        worker.start()
-
-        #thread.join(timeout=1)
-
     def _is_running(self, pid):
         try:
             os.kill(pid, 0)
@@ -85,7 +79,6 @@ class JobWorker(object):
 
     def _job_worker(self, job):
         print('running job %s' % job['id'])
-        log.debug('Worker spawned for job %s' % job['id'])
         self.db.update_job(job['id'], 'status', 'running')
 
         if job['args']:
@@ -100,14 +93,12 @@ class JobWorker(object):
 
         self.pids[job['id']] = proc.pid
 
-        logger = Thread(
-                target=self._log_worker,
-                args=[job['id'], proc.stdout, proc.stderr])
-        logger.daemon = True
-        logger.start()
+        self.executor.submit(self._log_worker,
+                             job['id'],
+                             proc.stdout,
+                             proc.stderr)
 
         proc.wait()
-        logger.join(timeout=1)
 
     def _log_worker(self, job_id, stdout, stderr):
         log.debug('Log handler started for job %s' % job_id)

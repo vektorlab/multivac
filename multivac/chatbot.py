@@ -2,7 +2,7 @@ import abc
 import logging
 
 from time import sleep
-from threading import Thread
+from concurrent.futures import ThreadPoolExecutor
 
 from multivac.db import JobsDB
 from multivac.util import format_time
@@ -23,9 +23,8 @@ class ChatBot(object):
                           'help'    : self._help }
         self.message_queue = []
 
-        t = Thread(target=self._message_worker)
-        t.daemon = True
-        t.start()
+        self.executor = ThreadPoolExecutor(max_workers=10)
+        self.executor.submit(self._message_worker)
 
     @abc.abstractmethod
     def reply(self, text, channel):
@@ -65,9 +64,7 @@ class ChatBot(object):
                 self.reply('%s needs confirmation' % str(job_id), channel)
                 self.reply('EOF', channel)
 
-            t = Thread(target=self._output_handler,args=(job_id, channel))
-            t.daemon = True
-            t.start()
+            self.executor.submit(self._output_handler, job_id, channel)
 
     @staticmethod
     def _parse_command(text):
