@@ -149,6 +149,20 @@ class Actions(Resource):
         return db.get_actions(), 200
 
 
+class Group(Resource):
+    def get(self, group_name):
+        db = app.config['db']
+        group = db.get_group(group_name)
+        if not group:
+            return invalid_resource()
+
+        return group,200
+
+class Groups(Resource):
+    def get(self):
+        db = app.config['db']
+        return db.get_groups(),200
+
 class Workers(Resource):
 
     def get(self):
