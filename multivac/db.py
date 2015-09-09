@@ -12,10 +12,11 @@ log = logging.getLogger('multivac')
 
 
 class JobsDB(object):
-    prefix = {'job': 'multivac_job',
-              'log': 'multivac_log',
-              'action': 'multivac_action',
-              'worker': 'multivac_worker'}
+    prefix = { 'job' : 'multivac_job',
+               'log' : 'multivac_log',
+               'group' : 'multivac_group',
+               'action' : 'multivac_action',
+               'worker' : 'multivac_worker' }
 
     def __init__(self, redis_host, redis_port):
         self.redis = StrictRedis(
@@ -188,8 +189,36 @@ class JobsDB(object):
          self.redis.keys(pattern=self._key('action', '*'))]
 
     #######
-    # Job Worker Methods
+    # Usergroup Methods
     #######
+
+    def get_group(self, group_name):
+        """
+        Return a list of usernames belonging to a group
+        """
+        return self.redis.lrange(self._key('group', group_name), 0, -1)
+
+    def get_groups(self):
+        """
+        Return all configured groups
+        """
+        key = self._key('group')
+        groups = [ g.split(':')[1] for g in \
+                   self.redis.keys(pattern=self._key('group', '*')) ]
+        return { g:self.get_group(g) for g in groups }
+
+    def add_group(self, group_name, members):
+        for m in members:
+            self.redis.lpush(self._key('group', group_name), m)
+
+    def purge_groups(self):
+        [ self.redis.delete(k) for k in \
+          self.redis.keys(pattern=self._key('group', '*')) ]
+
+    #######
+    # Job Worker Methods 
+    #######
+
     def register_worker(self, name, hostname):
         key = self._key('worker', name)
         worker = {'name': name, 'host': hostname}

@@ -94,7 +94,9 @@ class Jobs(Resource):
         if not args['action']:
             return make_error('missing required parameter "action"', 400)
 
-        ok, result = db.create_job(args['action'], args=args['action_args'])
+        ok,result = db.create_job(args['action'],
+                                  args=args['action_args'],
+                                  initiator='api_user')
         if not ok:
             return make_error(400, result)
 
