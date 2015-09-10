@@ -127,8 +127,6 @@ class ChatBot(object):
 
         self.db.update_job(arg, 'status', 'ready')
 
-        return 'confirmed job: %s' % arg
-
     def _workers(self, arg):
         workers = self.db.get_workers()
         if not workers:
