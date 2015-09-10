@@ -85,7 +85,7 @@ class ChatBot(object):
            vs posting when a job finishes. Default False.
         """
         active = False
-        prefix = '[%s]' % job_id
+        prefix = '[%s]' % job_id[-8:]
         log.debug('output handler spawned for job %s' % job_id)
 
         #sleep on jobs awaiting confirmation
@@ -96,7 +96,7 @@ class ChatBot(object):
             else:
                 sleep(1)
 
-        self.reply('%s running' % str(job_id), channel)
+        self.reply('%s running' % job_id[-8:], channel)
 
         if stream:
             for line in self.db.get_log(job_id):
