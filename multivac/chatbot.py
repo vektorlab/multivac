@@ -161,7 +161,9 @@ class ChatBot(object):
     def _help(self, args):
         actions = self.db.get_actions()
 
-        builtin_cmds = [ 'Builtin commands:' ] + [ c for c in self.builtins ] 
-        action_cmds = [ 'Action commands:' ] + [ a['name'] for a in actions ]
+        builtin_cmds = [ 'Builtin commands:' ]
+        builtin_cmds += sorted([ '  ' + c for c in self.builtins ])
+        action_cmds = [ 'Action commands:' ]
+        action_cmds += sorted([ '  ' + a['name'] for a in actions ])
 
         return builtin_cmds + action_cmds
