@@ -23,18 +23,25 @@ def main():
     parser.add_argument('-d',
                         action='store_true',
                         help='enable debug output')
+    parser.add_argument('-t',
+                        '--threads',
+                        type=int,
+                        default=10,
+                        help='number of threads to run with')
     parser.add_argument('subcommand',
                         choices=subcommands)
 
     args = parser.parse_args()
 
+    log_format = '%(asctime)-15s %(name)s[%(threadName)s] %(message)s'
+
     if args.d:
         debug = True
-        logging.basicConfig(level=logging.DEBUG)
+        logging.basicConfig(level=logging.DEBUG, format=log_format)
         log.debug('Debug logging enabled')
     else:
         debug = False
-        logging.basicConfig(level=logging.WARN)
+        logging.basicConfig(level=logging.WARN, format=log_format)
 
     try:
         with open(args.config_path, 'r') as of:
@@ -60,7 +67,7 @@ def main():
 
     if args.subcommand == 'worker':
         from multivac.worker import JobWorker
-        w = JobWorker(redis_host, redis_port, args.config_path)
+        w = JobWorker(redis_host, redis_port, args.config_path, threads=args.threads)
 
     if args.subcommand == 'slackbot':
         if not config['slack_token']:
@@ -68,7 +75,8 @@ def main():
             sys.exit(1)
 
         from multivac.slackbot import SlackBot
-        s = SlackBot(config['slack_token'], redis_host, redis_port)
+        s = SlackBot(config['slack_token'], redis_host, redis_port, threads=args.threads)
+        s.start()
 
 
 if __name__ == '__main__':

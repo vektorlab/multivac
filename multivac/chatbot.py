@@ -19,17 +19,24 @@ class ChatBot(object):
     a reply method and a messages property generator
     """
 
-    def __init__(self, redis_host, redis_port):
+    def __init__(self, redis_host, redis_port, threads=0):
         self.db = JobsDB(redis_host, redis_port)
         self.builtins = {'confirm': self._confirm,
                          'workers': self._workers,
                          'jobs': self._jobs,
                          'logs': self._logs,
                          'help': self._help}
+        self.executor = None
+        if threads:
+            self.executor = ThreadPoolExecutor(max_workers=threads)
+
         self.message_queue = []
 
-        self.executor = ThreadPoolExecutor(max_workers=10)
-        self.executor.submit(self._message_worker)
+    def start(self):
+        if self.executor:
+            self.executor.submit(self._message_worker)
+        else:
+            self._message_worker()
 
     @abc.abstractmethod
     def reply(self, text, channel):
@@ -69,7 +76,10 @@ class ChatBot(object):
                 self.reply('%s needs confirmation' % str(job_id), channel)
                 self.reply('EOF', channel)
 
-            self.executor.submit(self._output_handler, job_id, channel)
+            if self.executor:
+                self.executor.submit(self._output_handler, job_id, channel)
+            else:
+                self._output_handler(job_id, channel)
 
     @staticmethod
     def _parse_command(text):
