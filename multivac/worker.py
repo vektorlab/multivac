@@ -20,7 +20,7 @@ log = logging.getLogger('multivac')
 
 class JobWorker(object):
 
-    def __init__(self, redis_host, redis_port, config_path):
+    def __init__(self, redis_host, redis_port, config_path, threads=10):
         self.pids = {}  # dict of job_id:subprocess object
         self.config_path = config_path
         self.db = JobsDB(redis_host, redis_port)
@@ -28,7 +28,9 @@ class JobWorker(object):
         self._load_actions()
         self.name = self._get_name()
 
-        self.executor = ThreadPoolExecutor(max_workers=10)
+        self.executor = None
+        if threads:
+            self.executor = ThreadPoolExecutor(max_workers=threads)
 
         self.run()
 
@@ -40,7 +42,10 @@ class JobWorker(object):
 
             # spawn ready jobs
             for job in self.db.get_jobs(status='ready'):
-                self.executor.submit(self._job_worker, job)
+                if self.executor:
+                    self.executor.submit(self._job_worker, job)
+                else:
+                    self._job_worker(job)
 
             # collect ended processes
             pids = deepcopy(self.pids)
@@ -95,10 +100,14 @@ class JobWorker(object):
 
         self.pids[job['id']] = proc.pid
 
-        self.executor.submit(self._log_worker,
-                             job['id'],
-                             proc.stdout,
-                             proc.stderr)
+        if self.executor:
+
+            self.executor.submit(self._log_worker,
+                                 job['id'],
+                                 proc.stdout,
+                                 proc.stderr)
+        else:
+            self._log_worker(job['id'], proc.stdout, proc.stderr)
 
         proc.wait()
 

@@ -13,7 +13,7 @@ class SlackBot(ChatBot):
      - slack_token(str):
     """
 
-    def __init__(self, slack_token, redis_host, redis_port):
+    def __init__(self, slack_token, redis_host, redis_port, **kwargs):
         print('Starting Slackbot')
 
         self.slacksocket = SlackSocket(slack_token)
@@ -21,7 +21,7 @@ class SlackBot(ChatBot):
 
         print('Connected to Slack as %s' % self.me)
 
-        super().__init__(redis_host, redis_port)
+        super(ChatBot).__init__(redis_host, redis_port, **kwargs)
 
     @property
     def messages(self):
