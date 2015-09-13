@@ -7,11 +7,12 @@ from multivac.version import version
 
 log = logging.getLogger('multivac')
 
-subcommands = [ 'worker', 'slackbot', 'api' , 'console' ]
-#defaults
-config = { 'api_listen_port' : 8000,
-           'slack_token'     : None,
-           'redis'           : '127.0.0.1:6379' }
+subcommands = ['worker', 'slackbot', 'api', 'console']
+# defaults
+config = {'api_listen_port': 8000,
+          'slack_token': None,
+          'redis': '127.0.0.1:6379'}
+
 
 def main():
     parser = ArgumentParser(description='multivac v%s' % (version))
@@ -43,7 +44,7 @@ def main():
         sys.exit(1)
 
     if ':' in config['redis']:
-        redis_host,redis_port = config['redis'].split(':')
+        redis_host, redis_port = config['redis'].split(':')
     else:
         redis_host = config['redis']
         redis_port = 6379
@@ -63,11 +64,12 @@ def main():
 
     if args.subcommand == 'slackbot':
         if not config['slack_token']:
-            print('no slack token defined, exiting') 
+            print('no slack token defined, exiting')
             sys.exit(1)
 
         from multivac.slackbot import SlackBot
         s = SlackBot(config['slack_token'], redis_host, redis_port)
+
 
 if __name__ == '__main__':
     main()

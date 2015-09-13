@@ -10,23 +10,24 @@ from multivac.util import unix_time
 
 log = logging.getLogger('multivac')
 
+
 class JobsDB(object):
-    prefix = { 'job' : 'multivac_job',
-               'log' : 'multivac_log',
-               'action' : 'multivac_action',
-               'worker' : 'multivac_worker' }
+    prefix = {'job': 'multivac_job',
+              'log': 'multivac_log',
+              'action': 'multivac_action',
+              'worker': 'multivac_worker'}
 
     def __init__(self, redis_host, redis_port):
         self.redis = StrictRedis(
-                host=redis_host,
-                port=redis_port,
-                decode_responses=True)
+            host=redis_host,
+            port=redis_port,
+            decode_responses=True)
         self.subs = {}
 
-        #TODO: add connection test with r.config_get('port')
+        # TODO: add connection test with r.config_get('port')
 
     #######
-    # Job Methods 
+    # Job Methods
     #######
 
     def create_job(self, action_name, args=None, initiator=None):
@@ -40,7 +41,7 @@ class JobsDB(object):
         """
         job = self.get_action(action_name)
 
-        #validation
+        # validation
         if not job:
             return (False, 'No such action')
 
@@ -57,7 +58,10 @@ class JobsDB(object):
         sub.subscribe(self._key('log', job['id']))
         self.subs[job['id']] = sub
 
-        log.debug('Subscribed to log channel: %s' % self._key('log', job['id']))
+        log.debug(
+            'Subscribed to log channel: %s' %
+            self._key(
+                'log', job['id']))
 
         if initiator:
             self.append_job_log(job['id'], 'Job initiated by %s' % initiator)
@@ -71,19 +75,19 @@ class JobsDB(object):
         Update an arbitrary field for a job
         """
         self.redis.hset(self._key('job', job_id), field, value)
-        return (True, )
+        return (True,)
 
     def cleanup_job(self, job_id):
         """
         Cleanup log subscriptions for a given job id and mark completed
         """
-        #send EOF signal to streaming clients
+        # send EOF signal to streaming clients
         self.redis.publish(self._key('log', job_id), 'EOF')
 
         if job_id in self.subs:
             self.subs[job_id].unsubscribe()
             del self.subs[job_id]
-            log.debug('Unsubscribed from log channel: %s' % \
+            log.debug('Unsubscribed from log channel: %s' %
                       self._key('log', job_id))
 
         self.update_job(job_id, 'status', 'completed')
@@ -96,15 +100,15 @@ class JobsDB(object):
 
     def get_jobs(self, status='all'):
         """
-        Return all jobs dicts, optionally filtered by status 
+        Return all jobs dicts, optionally filtered by status
         via the 'status' param
         """
-        jobs = [ self.redis.hgetall(k) for k in \
-                 self.redis.keys(pattern=self._key('job', '*')) ]
+        jobs = [self.redis.hgetall(k) for k in
+                self.redis.keys(pattern=self._key('job', '*'))]
         if status != 'all':
-            return [ j for j in jobs if j['status'] == status ]
+            return [j for j in jobs if j['status'] == status]
         else:
-            return [ j for j in jobs ]
+            return [j for j in jobs]
 
     def get_log(self, job_id):
         """
@@ -124,7 +128,7 @@ class JobsDB(object):
     def get_logstream(self, job_id):
         """
         Returns a generator object to stream all job output
-        until the job has completed 
+        until the job has completed
         """
         key = self._key('log', job_id)
         sub = self.subs[job_id]
@@ -140,11 +144,11 @@ class JobsDB(object):
         Return the stored output of a given job id
         """
         logs = self.redis.lrange(self._key('log', job_id), 0, -1)
-        return [ l for l in reversed(logs) ]
+        return [l for l in reversed(logs)]
 
     def append_job_log(self, job_id, line):
         """
-        Append a line of job output to a redis list and 
+        Append a line of job output to a redis list and
         publish to relevant channel
         """
         key = self._key('log', job_id)
@@ -155,10 +159,10 @@ class JobsDB(object):
 
     def _append_ts(self, msg):
         ts = datetime.utcnow().strftime('%a %b %d %H:%M:%S %Y')
-        return '[%s] %s' % (ts,msg)
+        return '[%s] %s' % (ts, msg)
 
     #######
-    # Action Methods 
+    # Action Methods
     #######
 
     def get_action(self, action_name):
@@ -171,32 +175,32 @@ class JobsDB(object):
         """
         Return all configured actions
         """
-        return [ self.redis.hgetall(k) for k in \
-                 self.redis.keys(pattern=self._key('action', '*')) ]
+        return [self.redis.hgetall(k) for k in
+                self.redis.keys(pattern=self._key('action', '*'))]
 
     def add_action(self, action):
         self.redis.hmset(self._key('action', action['name']), action)
 
     def purge_actions(self):
-        [ self.redis.delete(k) for k in \
-          self.redis.keys(pattern=self._key('action', '*')) ]
+        [self.redis.delete(k) for k in
+         self.redis.keys(pattern=self._key('action', '*'))]
 
     #######
-    # Job Worker Methods 
+    # Job Worker Methods
     #######
     def register_worker(self, name, hostname):
         key = self._key('worker', name)
-        worker = { 'name': name, 'host': hostname }
+        worker = {'name': name, 'host': hostname}
 
         self.redis.hmset(key, worker)
         self.redis.expire(key, 15)
 
     def get_workers(self):
-        return [ self.redis.hgetall(k) for k in \
-                 self.redis.keys(pattern=self._key('worker', '*')) ]
+        return [self.redis.hgetall(k) for k in
+                self.redis.keys(pattern=self._key('worker', '*'))]
 
     #######
-    # Keyname Methods 
+    # Keyname Methods
     #######
 
     def _key(self, keytype, id):

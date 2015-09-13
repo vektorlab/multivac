@@ -8,9 +8,11 @@ from multivac.chatbot import ChatBot
 from multivac.version import version
 from multivac.util import format_time
 
+
 class ConsoleBot(ChatBot):
+
     def __init__(self, redis_host, redis_port):
-        self._messages =  []
+        self._messages = []
         self._wait = False
 
         super().__init__(redis_host, redis_port)
@@ -31,13 +33,13 @@ class ConsoleBot(ChatBot):
             self._wait = False
             return
         if isinstance(msg, list):
-            [ self._output(l) for l in msg ]
+            [self._output(l) for l in msg]
         else:
             self._output(msg)
 
     def init_readline(self):
-        self.prompt = colored('multivac> ','cyan',attrs=['bold'])
-        self.resprompt = colored('> ','red',attrs=['bold'])
+        self.prompt = colored('multivac> ', 'cyan', attrs=['bold'])
+        self.resprompt = colored('> ', 'red', attrs=['bold'])
 
         self._history_file = os.path.expanduser('~/.multivac_console')
         if os.path.isfile(self._history_file):
@@ -54,10 +56,10 @@ class ConsoleBot(ChatBot):
                 if not inputline:
                     continue
 
-                #append to messages queue for processing
-                self._messages.append((inputline,'console','console'))
+                # append to messages queue for processing
+                self._messages.append((inputline, 'console', 'console'))
 
-                #wait until output of command is completed
+                # wait until output of command is completed
                 self._wait = True
                 while self._wait:
                     sleep(.1)
@@ -76,9 +78,9 @@ class ConsoleBot(ChatBot):
         print(self.resprompt + text)
 
     def _autocomplete(self, text, state):
-        allcmds = [ c for c in self.builtins ]
-        allcmds += [ a['name'] for a in self.db.get_actions() ]
-        match = [ c for c in allcmds if c and c.startswith(text) ]
+        allcmds = [c for c in self.builtins]
+        allcmds += [a['name'] for a in self.db.get_actions()]
+        match = [c for c in allcmds if c and c.startswith(text)]
         match.append(None)
 
         return match[state]

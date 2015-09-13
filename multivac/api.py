@@ -9,18 +9,20 @@ from multivac.version import version
 from multivac.db import JobsDB
 import multivac.resources as mvresources
 
-resource_map = { mvresources.Jobs    : '/jobs',
-                 mvresources.Actions : '/actions',
-                 mvresources.Workers : '/workers',
-                 mvresources.Version : '/version',
-                 mvresources.Job     : '/jobs/<string:job_id>',
-                 mvresources.Logs    : '/logs/<string:job_id>',
-                 mvresources.Confirm : '/confirm/<string:job_id>',
-                 mvresources.Action  : '/actions/<string:action_name>' }
+resource_map = {mvresources.Jobs: '/jobs',
+                mvresources.Actions: '/actions',
+                mvresources.Workers: '/workers',
+                mvresources.Version: '/version',
+                mvresources.Job: '/jobs/<string:job_id>',
+                mvresources.Logs: '/logs/<string:job_id>',
+                mvresources.Confirm: '/confirm/<string:job_id>',
+                mvresources.Action: '/actions/<string:action_name>'}
+
 
 class MultivacApi(object):
+
     def __init__(self, redis_host, redis_port, debug=False):
-        app_dir =  os.path.dirname(os.path.realpath(__file__))
+        app_dir = os.path.dirname(os.path.realpath(__file__))
         static_dir = app_dir + '/static'
         template_dir = app_dir + '/templates'
 
@@ -32,7 +34,7 @@ class MultivacApi(object):
         self.app.config['DEBUG'] = debug
         self.app.config['db'] = JobsDB(redis_host, redis_port)
 
-        for resource,path in resource_map.items():
+        for resource, path in resource_map.items():
             self.api.add_resource(resource, path)
 
         @self.app.route('/', methods=['GET'])

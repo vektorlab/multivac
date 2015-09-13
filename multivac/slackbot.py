@@ -6,11 +6,13 @@ from multivac.chatbot import ChatBot
 
 log = logging.getLogger('multivac')
 
+
 class SlackBot(ChatBot):
     """
     params:
-     - slack_token(str): 
+     - slack_token(str):
     """
+
     def __init__(self, slack_token, redis_host, redis_port):
         print('Starting Slackbot')
 
@@ -19,7 +21,7 @@ class SlackBot(ChatBot):
 
         print('Connected to Slack as %s' % self.me)
 
-        super().__init__(redis_host, redis_port)  
+        super().__init__(redis_host, redis_port)
 
     @property
     def messages(self):
@@ -29,11 +31,11 @@ class SlackBot(ChatBot):
                 yield self._parse(event)
 
     def reply(self, msg, channel):
-        #skip any empty messages
+        # skip any empty messages
         if not msg or msg == 'EOF':
             return
 
-        #make codeblock if message is multiline
+        # make codeblock if message is multiline
         if isinstance(msg, list):
             msg = '```' + '\n'.join(msg) + '```'
         else:

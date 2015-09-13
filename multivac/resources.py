@@ -7,8 +7,9 @@ from multivac.version import version
 
 app = current_app
 
+
 def make_response(msg=None):
-    response_msg = { 'ok': True }
+    response_msg = {'ok': True}
     if msg:
         response_msg['message'] = msg
 
@@ -17,21 +18,27 @@ def make_response(msg=None):
 
     return response
 
+
 def make_error(status_code, msg):
-    error_msg = { 'status': status_code, 'message': msg, 'ok': False }
+    error_msg = {'status': status_code, 'message': msg, 'ok': False}
     response = Response(json.dumps(error_msg))
     response.status_code = status_code
 
     return response
 
+
 def invalid_resource():
-    return make_error(410,'a resource with that id does not exist')
+    return make_error(410, 'a resource with that id does not exist')
+
 
 class Version(Resource):
+
     def get(self):
-        return { 'version' : 'v%s' % version },200
+        return {'version': 'v%s' % version}, 200
+
 
 class Confirm(Resource):
+
     def post(self, job_id):
         db = app.config['db']
 
@@ -43,24 +50,28 @@ class Confirm(Resource):
 
         db.update_job(job_id, 'status', 'ready')
 
-        return { 'ok': True }
+        return {'ok': True}
+
 
 class Job(Resource):
+
     def get(self, job_id):
         db = app.config['db']
         job = db.get_job(job_id)
         if not job:
             return invalid_resource()
 
-        return job,200
+        return job, 200
+
 
 class Jobs(Resource):
+
     def get(self):
         db = app.config['db']
         jobs = db.get_jobs()
         jobs.sort(key=operator.itemgetter('created'), reverse=True)
 
-        return jobs,200
+        return jobs, 200
 
     def post(self):
         args = self._parse()
@@ -69,11 +80,11 @@ class Jobs(Resource):
         if not args['action']:
             return make_error('missing required parameter "action"', 400)
 
-        ok,result = db.create_job(args['action'],args=args['action_args'])
+        ok, result = db.create_job(args['action'], args=args['action_args'])
         if not ok:
             return make_error(400, result)
 
-        return { 'id': result },200
+        return {'id': result}, 200
 
     def _parse(self):
         parser = reqparse.RequestParser()
@@ -81,7 +92,9 @@ class Jobs(Resource):
         parser.add_argument('action_args', type=str)
         return parser.parse_args()
 
+
 class Logs(Resource):
+
     def get(self, job_id):
         args = self._parse()
         db = app.config['db']
@@ -91,7 +104,7 @@ class Logs(Resource):
                 yield l + '\n'
 
         if args['json']:
-           return [ l for l in db.get_stored_log(job_id) ],200
+            return [l for l in db.get_stored_log(job_id)], 200
 
         logstream = db.get_log(job_id)
         return Response(stream_with_context(stream(logstream)))
@@ -101,21 +114,27 @@ class Logs(Resource):
         parser.add_argument('json', type=bool)
         return parser.parse_args()
 
+
 class Action(Resource):
+
     def get(self, action_name):
         db = app.config['db']
         action = db.get_action(action_name)
         if not action:
             return invalid_resource()
 
-        return action,200
+        return action, 200
+
 
 class Actions(Resource):
+
     def get(self):
         db = app.config['db']
-        return db.get_actions(),200
+        return db.get_actions(), 200
+
 
 class Workers(Resource):
+
     def get(self):
         db = app.config['db']
-        return db.get_workers(),200
+        return db.get_workers(), 200

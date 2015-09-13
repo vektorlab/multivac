@@ -12,18 +12,20 @@ log = logging.getLogger('multivac')
 
 strip_ts = re.compile(r"\[[^)]*\]")
 
+
 class ChatBot(object):
     """
-    Generic base class for chatbots. Subclasses must provide 
+    Generic base class for chatbots. Subclasses must provide
     a reply method and a messages property generator
     """
+
     def __init__(self, redis_host, redis_port):
-        self.db  = JobsDB(redis_host, redis_port)
-        self.builtins = { 'confirm' : self._confirm,
-                          'workers' : self._workers,
-                          'jobs'    : self._jobs,
-                          'logs'    : self._logs,
-                          'help'    : self._help }
+        self.db = JobsDB(redis_host, redis_port)
+        self.builtins = {'confirm': self._confirm,
+                         'workers': self._workers,
+                         'jobs': self._jobs,
+                         'logs': self._logs,
+                         'help': self._help}
         self.message_queue = []
 
         self.executor = ThreadPoolExecutor(max_workers=10)
@@ -48,13 +50,13 @@ class ChatBot(object):
     def _process_msg(self, text, user, channel):
         """
         """
-        command,args = self._parse_command(text)
-        
+        command, args = self._parse_command(text)
+
         if command in self.builtins:
             self.reply(self.builtins[command](args), channel)
             self.reply('EOF', channel)
         else:
-            ok,result = self.db.create_job(command, args=args, initiator=user)
+            ok, result = self.db.create_job(command, args=args, initiator=user)
             if not ok:
                 self.reply(result, channel)
                 self.reply('EOF', channel)
@@ -91,7 +93,7 @@ class ChatBot(object):
         prefix = '[%s]' % job_id[-8:]
         log.debug('output handler spawned for job %s' % job_id)
 
-        #sleep on jobs awaiting confirmation
+        # sleep on jobs awaiting confirmation
         while not active:
             job = self.db.get_job(job_id)
             if job['status'] != 'pending':
@@ -132,10 +134,10 @@ class ChatBot(object):
         if not workers:
             return 'no registered workers'
         else:
-            return [ ('%s(%s)' % (w['name'],w['host'])) for w in workers ]
+            return [('%s(%s)' % (w['name'], w['host'])) for w in workers]
 
     def _jobs(self, arg):
-        subcommands = [ 'pending', 'running', 'completed', 'all' ]
+        subcommands = ['pending', 'running', 'completed', 'all']
         if arg not in subcommands:
             return 'argument must be one of %s' % ','.join(subcommands)
 
@@ -147,8 +149,8 @@ class ChatBot(object):
         formatted = []
         for j in jobs:
             created = format_time(j['created'])
-            formatted.append('%s %s(%s) %s' % \
-                        (created, j['id'], j['name'], j['status']))
+            formatted.append('%s %s(%s) %s' %
+                             (created, j['id'], j['name'], j['status']))
 
         return formatted
 
@@ -161,9 +163,9 @@ class ChatBot(object):
     def _help(self, args):
         actions = self.db.get_actions()
 
-        builtin_cmds = [ 'Builtin commands:' ]
-        builtin_cmds += sorted([ '  ' + c for c in self.builtins ])
-        action_cmds = [ 'Action commands:' ]
-        action_cmds += sorted([ '  ' + a['name'] for a in actions ])
+        builtin_cmds = ['Builtin commands:']
+        builtin_cmds += sorted(['  ' + c for c in self.builtins])
+        action_cmds = ['Action commands:']
+        action_cmds += sorted(['  ' + a['name'] for a in actions])
 
         return builtin_cmds + action_cmds
