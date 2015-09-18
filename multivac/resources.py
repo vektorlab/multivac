@@ -53,6 +53,20 @@ class Confirm(Resource):
         return {'ok': True}
 
 
+class Cancel(Resource):
+    def post(self, job_id):
+        db = app.config['db']
+
+        job = db.get_job(job_id)
+        if not job:
+            return invalid_resource()
+        if job['status'] != 'pending':
+            return make_error(400, 'cannot cancel %s job' % job['status'])
+
+        db.remove_job(job_id)
+
+        return { 'ok': True }
+
 class Job(Resource):
 
     def get(self, job_id):

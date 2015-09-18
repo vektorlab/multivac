@@ -88,13 +88,7 @@
     }
    
     table a:link {
-     color: #a8a8a8;
-     background: transparent;
-     text-decoration: underline;
-    }
-   
-    table a:visited {
-     color: #a8a8a8;
+     color: #525050;
      background: transparent;
      text-decoration: underline;
     }
@@ -161,7 +155,17 @@
      $.post(url, function(data) {
         console.log(data.ok);
         if (data.ok === true) {
-          show_msg('Succesfully confirmed job ' + job_id);
+          show_msg('Confirmed job ' + job_id);
+        };
+     });
+    };
+
+    function do_cancel(job_id) {
+     var url = '/cancel/' + job_id;
+     $.post(url, function(data) {
+        console.log(data.ok);
+        if (data.ok === true) {
+          show_msg('Canceled job ' + job_id);
         };
      });
     };
@@ -277,7 +281,8 @@
        status.innerHTML = job['status']
        if (job['status'] == 'pending') {
         status.className = 'yellow';
-        status.innerHTML += ' <a href="javascript:do_confirm(\'' + job['id'] + '\')">confirm</a>';
+				status.innerHTML += '<br><a href="javascript:do_confirm(\'' + job['id'] + '\')">confirm</a>';
+				status.innerHTML += ' <a href="javascript:do_cancel(\'' + job['id'] + '\')">cancel</a>';
        }
        if (job['status'] == 'running') {
         status.className = 'green'

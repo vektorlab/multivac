@@ -20,12 +20,13 @@ class ChatBot(object):
     """
 
     def __init__(self, redis_host, redis_port):
-        self.db = JobsDB(redis_host, redis_port)
-        self.builtins = {'confirm': self._confirm,
-                         'workers': self._workers,
-                         'jobs': self._jobs,
-                         'logs': self._logs,
-                         'help': self._help}
+        self.db  = JobsDB(redis_host, redis_port)
+        self.builtins = { 'confirm' : self._confirm,
+                          'cancel'  : self._cancel,
+                          'workers' : self._workers,
+                          'jobs'    : self._jobs,
+                          'logs'    : self._logs,
+                          'help'    : self._help }
         self.message_queue = []
 
         self.executor = ThreadPoolExecutor(max_workers=10)
@@ -35,7 +36,7 @@ class ChatBot(object):
     def reply(self, text, channel):
         raise NotImplementedError
 
-    @abc.abstractmethod
+    @abc.abstractproperty
     def messages(self):
         """
         Generator yielding message tuples
@@ -128,6 +129,16 @@ class ChatBot(object):
             return 'job not awaiting confirm'
 
         self.db.update_job(arg, 'status', 'ready')
+
+    def _cancel(self, arg):
+        job = self.db.get_job(arg)
+        if not job:
+            return 'no such job id'
+        if job['status'] != 'pending':
+            return 'unable to cancel %s job' % job['status']
+
+        self.db.remove_job(arg)
+        return 'job %s canceled' % job['id']
 
     def _workers(self, arg):
         workers = self.db.get_workers()
