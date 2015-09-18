@@ -70,10 +70,12 @@ class JobsDB(object):
 
         return (True, job['id'])
 
+    def remove_job(self, job_id):
+        """ Remove a job by ID """
+        return self.redis.delete(self._key('job', job_id))
+
     def update_job(self, job_id, field, value):
-        """
-        Update an arbitrary field for a job
-        """
+        """ Update an arbitrary field for a job """
         self.redis.hset(self._key('job', job_id), field, value)
         return (True,)
 
