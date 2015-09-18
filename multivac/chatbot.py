@@ -35,7 +35,7 @@ class ChatBot(object):
     def reply(self, text, channel):
         raise NotImplementedError
 
-    @abc.abstractmethod
+    @abc.abstractproperty
     def messages(self):
         """
         Generator yielding message tuples
