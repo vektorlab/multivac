@@ -10,7 +10,6 @@ from multivac.util import unix_time
 
 log = logging.getLogger('multivac')
 
-
 class JobsDB(object):
     prefix = { 'job' : 'multivac_job',
                'log' : 'multivac_log',
@@ -76,12 +75,12 @@ class JobsDB(object):
     def cancel_job(self, job_id):
         """ Cancel and cleanup a pending job by ID """
         job = self.get_job(job_id)
-        if not job:
-            return (False, 'No such job id')
         if job['status'] != 'pending':
             return (False, 'Cannot cancel job in %s state' % job['status'])
 
         self.cleanup_job(job_id, canceled=True)
+
+        return (True, '')
 
     def update_job(self, job_id, field, value):
         """ Update an arbitrary field for a job """

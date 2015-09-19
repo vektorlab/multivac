@@ -103,8 +103,6 @@ class ChatBot(object):
             else:
                 sleep(1)
 
-        self.reply('%s running' % job_id[-8:], channel)
-
         if stream:
             for line in self.db.get_log(job_id):
                 line = re.sub(strip_ts, '', line)
@@ -135,10 +133,11 @@ class ChatBot(object):
         job = self.db.get_job(arg)
         if not job:
             return 'no such job id'
-        if job['status'] != 'pending':
-            return 'unable to cancel %s job' % job['status']
 
-        self.db.cancel_job(arg)
+        ok,result = self.db.cancel_job(arg)
+        if not ok:
+            return result
+
         return 'job %s canceled' % job['id']
 
     def _workers(self, arg):

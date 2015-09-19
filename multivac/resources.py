@@ -52,10 +52,10 @@ class Cancel(Resource):
         job = db.get_job(job_id)
         if not job:
             return invalid_resource()
-        if job['status'] != 'pending':
-            return make_error(400, 'cannot cancel %s job' % job['status'])
 
-        db.cancel_job(job_id)
+        ok,result = db.cancel_job(job_id)
+        if not ok:
+            return make_error(400, result)
 
         return { 'ok': True }
 
