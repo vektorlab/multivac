@@ -12,13 +12,11 @@ log = logging.getLogger('multivac')
 
 strip_ts = re.compile(r"\[[^)]*\]")
 
-
 class ChatBot(object):
     """
     Generic base class for chatbots. Subclasses must provide
     a reply method and a messages property generator
     """
-
     def __init__(self, redis_host, redis_port):
         self.db  = JobsDB(redis_host, redis_port)
         self.builtins = { 'confirm' : self._confirm,
@@ -46,7 +44,10 @@ class ChatBot(object):
 
     def _message_worker(self):
         for msg in self.messages:
-            self._process_msg(*msg)
+            try:
+                self._process_msg(*msg)
+            except Exception as e:
+                log.error(e)
 
     def _process_msg(self, text, user, channel):
         """
