@@ -62,7 +62,8 @@ class JobWorker(object):
         with open(path, 'r') as of:
             config = yaml.load(of.read())
 
-        self._read_groups(config['groups'])
+        if 'groups' in config:
+            self._read_groups(config['groups'])
         self._read_actions(config['actions'])
 
     def _read_groups(self, groups):
