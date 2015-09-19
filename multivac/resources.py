@@ -7,7 +7,6 @@ from multivac.version import version
 
 app = current_app
 
-
 def make_response(msg=None):
     response_msg = {'ok': True}
     if msg:
@@ -18,7 +17,6 @@ def make_response(msg=None):
 
     return response
 
-
 def make_error(status_code, msg):
     error_msg = {'status': status_code, 'message': msg, 'ok': False}
     response = Response(json.dumps(error_msg))
@@ -26,19 +24,14 @@ def make_error(status_code, msg):
 
     return response
 
-
 def invalid_resource():
     return make_error(410, 'a resource with that id does not exist')
 
-
 class Version(Resource):
-
     def get(self):
         return {'version': 'v%s' % version}, 200
 
-
 class Confirm(Resource):
-
     def post(self, job_id):
         db = app.config['db']
 
@@ -51,7 +44,6 @@ class Confirm(Resource):
         db.update_job(job_id, 'status', 'ready')
 
         return {'ok': True}
-
 
 class Cancel(Resource):
     def post(self, job_id):
@@ -68,18 +60,14 @@ class Cancel(Resource):
         return { 'ok': True }
 
 class Job(Resource):
-
     def get(self, job_id):
-        db = app.config['db']
-        job = db.get_job(job_id)
+        job = app.config['db'].get_job(job_id)
         if not job:
             return invalid_resource()
 
         return job, 200
 
-
 class Jobs(Resource):
-
     def get(self):
         db = app.config['db']
         jobs = db.get_jobs()
@@ -108,9 +96,7 @@ class Jobs(Resource):
         parser.add_argument('action_args', type=str)
         return parser.parse_args()
 
-
 class Logs(Resource):
-
     def get(self, job_id):
         args = self._parse()
         db = app.config['db']
@@ -130,40 +116,30 @@ class Logs(Resource):
         parser.add_argument('json', type=bool)
         return parser.parse_args()
 
-
 class Action(Resource):
-
     def get(self, action_name):
-        db = app.config['db']
-        action = db.get_action(action_name)
+        action = app.config['db'].get_action(action_name)
         if not action:
             return invalid_resource()
 
         return action, 200
 
-
 class Actions(Resource):
     def get(self):
-        db = app.config['db']
-        return db.get_actions(), 200
-
+        return app.config['db'].get_actions(), 200
 
 class Group(Resource):
     def get(self, group_name):
-        db = app.config['db']
-        group = db.get_group(group_name)
+        group = app.config['db'].get_group(group_name)
         if not group:
             return invalid_resource()
 
-        return group,200
+        return group, 200
 
 class Groups(Resource):
     def get(self):
-        db = app.config['db']
-        return db.get_groups(),200
+        return app.config['db'].get_groups(), 200
 
 class Workers(Resource):
-
     def get(self):
-        db = app.config['db']
-        return db.get_workers(), 200
+        return app.config['db'].get_workers(), 200
