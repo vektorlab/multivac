@@ -55,7 +55,7 @@ class Cancel(Resource):
         if job['status'] != 'pending':
             return make_error(400, 'cannot cancel %s job' % job['status'])
 
-        db.remove_job(job_id)
+        db.cancel_job(job_id)
 
         return { 'ok': True }
 

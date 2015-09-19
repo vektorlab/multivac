@@ -73,29 +73,41 @@ class JobsDB(object):
 
         return (True, job['id'])
 
-    def remove_job(self, job_id):
-        """ Remove a job by ID """
-        return self.redis.delete(self._key('job', job_id))
+    def cancel_job(self, job_id):
+        """ Cancel and cleanup a pending job by ID """
+        job = self.get_job(job_id)
+        if not job:
+            return (False, 'No such job id')
+        if job['status'] != 'pending':
+            return (False, 'Cannot cancel job in %s state' % job['status'])
+
+        self.cleanup_job(job_id, canceled=True)
 
     def update_job(self, job_id, field, value):
         """ Update an arbitrary field for a job """
         self.redis.hset(self._key('job', job_id), field, value)
         return (True,)
 
-    def cleanup_job(self, job_id):
+    def cleanup_job(self, job_id, canceled=False):
         """
         Cleanup log subscriptions for a given job id and mark completed
+        params:
+         - canceled(bool): If True, mark job as canceled instead of completed
         """
+        logkey = self._key('log', job_id)
+
         # send EOF signal to streaming clients
-        self.redis.publish(self._key('log', job_id), 'EOF')
+        self.redis.publish(logkey, 'EOF')
 
         if job_id in self.subs:
             self.subs[job_id].unsubscribe()
             del self.subs[job_id]
-            log.debug('Unsubscribed from log channel: %s' %
-                      self._key('log', job_id))
+            log.debug('Unsubscribed from log channel: %s' % logkey)
 
-        self.update_job(job_id, 'status', 'completed')
+        if canceled:
+            self.update_job(job_id, 'status', 'canceled')
+        else:
+            self.update_job(job_id, 'status', 'completed')
 
     def get_job(self, job_id):
         """

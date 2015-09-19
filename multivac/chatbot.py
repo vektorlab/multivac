@@ -138,7 +138,7 @@ class ChatBot(object):
         if job['status'] != 'pending':
             return 'unable to cancel %s job' % job['status']
 
-        self.db.remove_job(arg)
+        self.db.cancel_job(arg)
         return 'job %s canceled' % job['id']
 
     def _workers(self, arg):
