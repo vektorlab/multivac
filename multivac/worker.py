@@ -7,7 +7,7 @@ import fcntl
 import shlex
 import names
 
-from time import sleep
+from time import time, sleep
 from redis import StrictRedis
 from copy import deepcopy
 from concurrent.futures import ThreadPoolExecutor
@@ -17,9 +17,13 @@ from multivac.db import JobsDB
 
 log = logging.getLogger('multivac')
 
+pending_job_timeout = 300
 
 class JobWorker(object):
-
+    """
+    Multivac worker process. Spawns jobs, streams job stdout/stderr,
+    and creates actions and groups in redis from config file.
+    """
     def __init__(self, redis_host, redis_port, config_path):
         self.pids = {}  # dict of job_id:subprocess object
         self.db = JobsDB(redis_host, redis_port)
@@ -53,6 +57,13 @@ class JobWorker(object):
             if os.stat(self.config_path).st_mtime != self.config_mtime:
                 log.warn('re-reading modified config %s' % self.config_path)
                 self.read_config(self.config_path)
+
+            # cancel pending jobs exceeding timeout
+            now = time()
+            for job in self.db.get_jobs(status='pending'):
+                if (now - int(job['created'])) > pending_job_timeout:
+                    print('canceling unconfirmed job %s' % job['id'])
+                    self.db.cancel_job(job['id'])
 
             sleep(1)
 

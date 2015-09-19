@@ -98,6 +98,8 @@ class ChatBot(object):
         # sleep on jobs awaiting confirmation
         while not active:
             job = self.db.get_job(job_id)
+            if job['status'] == 'canceled':
+                return
             if job['status'] != 'pending':
                 active = True
             else:
