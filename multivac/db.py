@@ -42,9 +42,11 @@ class JobsDB(object):
         """
         job = self.get_action(action_name)
 
-        # validation
         if not job:
             return (False, 'No such action')
+
+        if not self.check_user(initiator, job['allow_groups'].split(',')):
+            return (False, 'Invalid user command')
 
         job['id'] = str(uuid4().hex)
         job['args'] = args
@@ -192,6 +194,21 @@ class JobsDB(object):
     # Usergroup Methods
     #######
 
+    def check_user(self, user, groups):
+        """
+        Check a list of groups to see if a user is a member to any
+        params:
+         - user(str): user name
+         - groups(list): list of group names
+        """
+        if 'all' in groups:
+            return True
+        for group in groups:
+            log.debug('checking group %s' % (group))
+            if user in self.get_group(group):
+                return True
+        return False
+
     def get_group(self, group_name):
         """
         Return a list of usernames belonging to a group
@@ -202,14 +219,14 @@ class JobsDB(object):
         """
         Return all configured groups
         """
-        key = self._key('group')
-        groups = [ g.split(':')[1] for g in \
-                   self.redis.keys(pattern=self._key('group', '*')) ]
+        key = self._key('group', '*')
+        groups = [ g.split(':')[1] for g in self.redis.keys(pattern=key) ]
         return { g:self.get_group(g) for g in groups }
 
     def add_group(self, group_name, members):
+        key = self._key('group', group_name)
         for m in members:
-            self.redis.lpush(self._key('group', group_name), m)
+            self.redis.lpush(key, m)
 
     def purge_groups(self):
         [ self.redis.delete(k) for k in \

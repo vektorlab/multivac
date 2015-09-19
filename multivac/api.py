@@ -10,7 +10,7 @@ from multivac.db import JobsDB
 import multivac.resources as mvresources
 
 resource_map = { mvresources.Jobs    : '/jobs',
-                 mvresources.Groups  : '/Groups',
+                 mvresources.Groups  : '/groups',
                  mvresources.Actions : '/actions',
                  mvresources.Workers : '/workers',
                  mvresources.Version : '/version',

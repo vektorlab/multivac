@@ -143,7 +143,6 @@ class Action(Resource):
 
 
 class Actions(Resource):
-
     def get(self):
         db = app.config['db']
         return db.get_actions(), 200

@@ -22,10 +22,9 @@ class JobWorker(object):
 
     def __init__(self, redis_host, redis_port, config_path):
         self.pids = {}  # dict of job_id:subprocess object
-        self.config_path = config_path
         self.db = JobsDB(redis_host, redis_port)
 
-        self._load_actions()
+        self._read_config(config_path)
         self.name = self._get_name()
 
         self.executor = ThreadPoolExecutor(max_workers=10)
@@ -59,15 +58,27 @@ class JobWorker(object):
         else:
             return name
 
-    def _load_actions(self):
-        with open(self.config_path, 'r') as of:
-            actions = yaml.load(of.read())['actions']
+    def _read_config(self, path):
+        with open(path, 'r') as of:
+            config = yaml.load(of.read())
 
+        self._read_groups(config['groups'])
+        self._read_actions(config['actions'])
+
+    def _read_groups(self, groups):
+        self.db.purge_groups()
+        for group,members in groups.items():
+            self.db.add_group(group, members)
+            log.info('loaded group %s' % (group))
+
+    def _read_actions(self, actions):
         self.db.purge_actions()
+        for a in actions:
+            action = { 'confirm_required': False, 'allow_groups': 'all' }
+            action.update(a)
 
-        for action in actions:
-            if 'confirm_required' not in action:
-                action['confirm_required'] = False
+            if isinstance(action['allow_groups'], list): 
+                action['allow_groups'] = ','.join(action['allow_groups'])
 
             self.db.add_action(action)
             log.info('loaded action %s' % (action['name']))
