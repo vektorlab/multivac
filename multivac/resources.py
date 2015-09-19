@@ -94,7 +94,9 @@ class Jobs(Resource):
         if not args['action']:
             return make_error('missing required parameter "action"', 400)
 
-        ok, result = db.create_job(args['action'], args=args['action_args'])
+        ok,result = db.create_job(args['action'],
+                                  args=args['action_args'],
+                                  initiator='api_user')
         if not ok:
             return make_error(400, result)
 
@@ -141,11 +143,24 @@ class Action(Resource):
 
 
 class Actions(Resource):
-
     def get(self):
         db = app.config['db']
         return db.get_actions(), 200
 
+
+class Group(Resource):
+    def get(self, group_name):
+        db = app.config['db']
+        group = db.get_group(group_name)
+        if not group:
+            return invalid_resource()
+
+        return group,200
+
+class Groups(Resource):
+    def get(self):
+        db = app.config['db']
+        return db.get_groups(),200
 
 class Workers(Resource):
 
