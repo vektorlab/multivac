@@ -24,7 +24,8 @@ class JobWorker(object):
         self.pids = {}  # dict of job_id:subprocess object
         self.db = JobsDB(redis_host, redis_port)
 
-        self._read_config(config_path)
+        self.config_path = config_path
+        self.read_config(self.config_path)
         self.name = self._get_name()
 
         self.executor = ThreadPoolExecutor(max_workers=10)
@@ -34,7 +35,6 @@ class JobWorker(object):
     def run(self):
         print('Starting Multivac Job Worker %s' % self.name)
         while True:
-
             self.db.register_worker(self.name, socket.getfqdn())
 
             # spawn ready jobs
@@ -49,18 +49,18 @@ class JobWorker(object):
                     del self.pids[job_id]
                     print('completed job %s' % job['id'])
 
-            sleep(2)
+            # re-read config if modified
+            if os.stat(self.config_path).st_mtime != self.config_mtime:
+                log.warn('re-reading modified config %s' % self.config_path)
+                self.read_config(self.config_path)
 
-    def _get_name(self):
-        name = names.get_first_name()
-        if name in self.db.get_workers():
-            self._get_name()
-        else:
-            return name
+            sleep(1)
 
-    def _read_config(self, path):
+    def read_config(self, path):
         with open(path, 'r') as of:
             config = yaml.load(of.read())
+
+        self.config_mtime = os.stat(path).st_mtime
 
         if 'groups' in config:
             self._read_groups(config['groups'])
@@ -83,6 +83,16 @@ class JobWorker(object):
 
             self.db.add_action(action)
             log.info('loaded action %s' % (action['name']))
+
+    def _get_name(self):
+        """
+        Randomly generate a unique name for this worker
+        """
+        name = names.get_first_name()
+        if name in self.db.get_workers():
+            self._get_name()
+        else:
+            return name
 
     def _is_running(self, pid):
         try:
