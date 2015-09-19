@@ -56,14 +56,7 @@ class JobsDB(object):
         else:
             job['status'] = 'ready'
 
-        sub = self.redis.pubsub(ignore_subscribe_messages=True)
-        sub.subscribe(self._key('log', job['id']))
-        self.subs[job['id']] = sub
-
-        log.debug(
-            'Subscribed to log channel: %s' %
-            self._key(
-                'log', job['id']))
+        self._subscribe_to_log(job['id'])
 
         if initiator:
             self.append_job_log(job['id'], 'Job initiated by %s' % initiator)
@@ -176,6 +169,16 @@ class JobsDB(object):
     def _append_ts(self, msg):
         ts = datetime.utcnow().strftime('%a %b %d %H:%M:%S %Y')
         return '[%s] %s' % (ts, msg)
+
+    def _subscribe_to_log(self, job_id):
+        """ Subscribe this db object to a jobs log channel by ID """
+        key = self._key('log', job_id)
+
+        sub = self.redis.pubsub(ignore_subscribe_messages=True)
+        sub.subscribe(key)
+        self.subs[job_id] = sub
+
+        log.debug('Subscribed to log channel: %s' % key)
 
     #######
     # Action Methods
