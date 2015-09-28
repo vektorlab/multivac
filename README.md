@@ -4,7 +4,7 @@
   <img src="https://raw.githubusercontent.com/bcicen/multivac/master/logo.png" alt="Statsquid"/>
 </p>
 
-A ChatOps bot for Slack with a integrated job queue and RESTful API
+Extensible ChatOps framework with an integrated job queue, RESTful API, and built-in support for Slack(with more chat services planned!)
 
 # Quickstart
 
