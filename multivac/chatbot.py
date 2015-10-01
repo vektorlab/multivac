@@ -123,6 +123,7 @@ class ChatBot(object):
     ######
 
     def _confirm(self, arg):
+        """ Confirm a pending job """
         job = self.db.get_job(arg)
         if not job:
             return 'no such job id'
@@ -132,6 +133,7 @@ class ChatBot(object):
         self.db.update_job(arg, 'status', 'ready')
 
     def _cancel(self, arg):
+        """ Cancel a pending job """
         job = self.db.get_job(arg)
         if not job:
             return 'no such job id'
@@ -143,6 +145,7 @@ class ChatBot(object):
         return 'job %s canceled' % job['id']
 
     def _workers(self, arg):
+        """ Show registered job workers """
         workers = self.db.get_workers()
         if not workers:
             return 'no registered workers'
@@ -150,6 +153,7 @@ class ChatBot(object):
             return [('%s(%s)' % (w['name'], w['host'])) for w in workers]
 
     def _jobs(self, arg):
+        """ Show jobs by currrent state """
         subcommands = ['pending', 'running', 'completed', 'all']
         if arg not in subcommands:
             return 'argument must be one of %s' % ','.join(subcommands)
@@ -168,17 +172,21 @@ class ChatBot(object):
         return formatted
 
     def _logs(self, args):
+        """ Show logs for a given job id """
         if not self.db.get_job(args):
             return 'no matching jobs found'
 
         return self.db.get_stored_log(args)
 
     def _help(self, args):
-        actions = self.db.get_actions()
-
+        """ Show this help dialog """
         builtin_cmds = ['Builtin commands:']
-        builtin_cmds += sorted(['  ' + c for c in self.builtins])
+        for cmd,func in sorted(self.builtins.items()):
+            builtin_cmds.append('  [ %s ]%s' % (cmd, func.__doc__))
+
         action_cmds = ['Action commands:']
-        action_cmds += sorted(['  ' + a['name'] for a in actions])
+        for cmd in sorted([ a['name'] for a in self.db.get_actions() ]):
+            action_cmds.append('  [ %s ]' % cmd)
 
         return builtin_cmds + action_cmds
+        replace('\n', '').replace('  ', '')
