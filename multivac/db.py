@@ -44,7 +44,10 @@ class JobsDB(object):
         if not job:
             return (False, 'No such action')
 
+        #check that user has privilege for this command
         if not self.check_user(initiator, job['allow_groups'].split(',')):
+            log.debug('action denied: %s for user %s' % \
+                     (action_name, initiator))
             return (False, 'Invalid user command')
 
         job['id'] = str(uuid4().hex)
