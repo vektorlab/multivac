@@ -158,16 +158,22 @@ class JobsDB(object):
         logs = self.redis.lrange(self._key('log', job_id), 0, -1)
         return [l for l in reversed(logs)]
 
-    def append_job_log(self, job_id, line):
+    def append_job_log(self, job_id, text):
         """
         Append a line of job output to a redis list and
         publish to relevant channel
         """
         key = self._key('log', job_id)
-        prefixed_line = self._append_ts(line)
 
-        self.redis.publish(key, prefixed_line)
-        self.redis.lpush(key, prefixed_line)
+        #split up the line if carriage returns, newlines
+        if len(text.splitlines()) > 1:
+            for line in text.splitlines():
+                self.append_job_log(job_id, line)
+        else:
+            if not text.isspace(): #don't keep empty lines
+                prefixed = self._append_ts(text)
+                self.redis.publish(key, prefixed)
+                self.redis.lpush(key, prefixed)
 
     def _append_ts(self, msg):
         ts = datetime.utcnow().strftime('%a %b %d %H:%M:%S %Y')
