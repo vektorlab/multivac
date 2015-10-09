@@ -1,4 +1,3 @@
-import re
 import abc
 import logging
 
@@ -9,8 +8,6 @@ from multivac.db import JobsDB
 from multivac.util import format_time
 
 log = logging.getLogger('multivac')
-
-strip_ts = re.compile(r"\[[^)]*\]")
 
 class ChatBot(object):
     """
@@ -106,13 +103,11 @@ class ChatBot(object):
                 sleep(1)
 
         if stream:
-            for line in self.db.get_log(job_id):
-                line = re.sub(strip_ts, '', line)
+            for line in self.db.get_log(job_id, timestamp=False):
                 self.reply(prefix + line, channel)
         else:
             msg = ''
-            for line in self.db.get_log(job_id):
-                line = re.sub(strip_ts, '', line)
+            for line in self.db.get_log(job_id, timestamp=False):
                 msg += prefix + line + '\n'
             self.reply(msg, channel)
 
