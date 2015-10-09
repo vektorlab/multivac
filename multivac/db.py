@@ -1,3 +1,4 @@
+import json
 import logging
 import redis.exceptions
 
@@ -122,10 +123,12 @@ class JobsDB(object):
         else:
             return [j for j in jobs]
 
-    def get_log(self, job_id):
+    def get_log(self, job_id, timestamp=True):
         """
         Return stored log for a given job id if finished,
         otherwise return streaming log generator
+        params:
+         - timestamp(bool): prefix lines with timestamp. default True.
         """
         job = self.get_job(job_id)
 
@@ -133,14 +136,16 @@ class JobsDB(object):
             return (False, 'no such job id')
 
         if job['status'] == 'completed':
-            return self.get_stored_log(job_id)
+            return self.get_stored_log(job_id, timestamp=timestamp)
         else:
-            return self.get_logstream(job_id)
+            return self.get_logstream(job_id, timestamp=timestamp)
 
-    def get_logstream(self, job_id):
+    def get_logstream(self, job_id, timestamp=True):
         """
         Returns a generator object to stream all job output
         until the job has completed
+        params:
+         - timestamp(bool): prefix lines with timestamp. default True.
         """
         key = self._key('log', job_id)
         sub = self.subs[job_id]
@@ -149,14 +154,17 @@ class JobsDB(object):
             if str(msg['data']) == 'EOF':
                 break
             else:
-                yield msg['data']
+                yield self._read_jsonlog(msg['data'], append_ts=timestamp)
 
-    def get_stored_log(self, job_id):
+    def get_stored_log(self, job_id, timestamp=True):
         """
         Return the stored output of a given job id
+        params:
+         - timestamp(bool): prefix lines with timestamp. default True.
         """
         logs = self.redis.lrange(self._key('log', job_id), 0, -1)
-        return [l for l in reversed(logs)]
+        return [ self._read_jsonlog(l,append_ts=timestamp) for \
+                 l in reversed(logs) ]
 
     def append_job_log(self, job_id, text):
         """
@@ -171,13 +179,21 @@ class JobsDB(object):
                 self.append_job_log(job_id, line)
         else:
             if not text.isspace(): #don't keep empty lines
-                prefixed = self._append_ts(text)
-                self.redis.publish(key, prefixed)
-                self.redis.lpush(key, prefixed)
+                logjson = self._jsonlog(text)
+                self.redis.publish(key, logjson)
+                self.redis.lpush(key, logjson)
 
-    def _append_ts(self, msg):
-        ts = datetime.utcnow().strftime('%a %b %d %H:%M:%S %Y')
+    @staticmethod
+    def _read_jsonlog(jsonlog, append_ts=True):
+        ts,msg = json.loads(jsonlog)
+        if not append_ts:
+            return msg
         return '[%s] %s' % (ts, msg)
+
+    @staticmethod
+    def _jsonlog(msg):
+        ts = datetime.utcnow().strftime('%a %b %d %H:%M:%S %Y')
+        return json.dumps((ts, msg))
 
     def _subscribe_to_log(self, job_id):
         """ Subscribe this db object to a jobs log channel by ID """
