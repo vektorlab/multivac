@@ -69,7 +69,7 @@ class ChatBot(object):
                 self.reply('%s needs confirmation' % str(job_id), channel)
                 self.reply('EOF', channel)
             
-            if job['chatbot_stream']:
+            if job['chatbot_stream'] != 'False':
                 self.executor.submit(self._output_handler, job_id, channel)
 
     @staticmethod
