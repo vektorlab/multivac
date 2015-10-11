@@ -86,7 +86,9 @@ class JobWorker(object):
     def _read_actions(self, actions):
         self.db.purge_actions()
         for a in actions:
-            action = { 'confirm_required': False, 'allow_groups': 'all' }
+            action = { 'confirm_required': False,
+                       'chatbot_stream': True,
+                       'allow_groups': 'all' }
             action.update(a)
 
             if isinstance(action['allow_groups'], list): 

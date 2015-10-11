@@ -64,11 +64,13 @@ class ChatBot(object):
             job_id = result
             log.info('Created job %s' % job_id)
 
-            if self.db.get_job(job_id)['status'] == 'pending':
+            job = self.db.get_job(job_id)
+            if job['status'] == 'pending':
                 self.reply('%s needs confirmation' % str(job_id), channel)
                 self.reply('EOF', channel)
-
-            self.executor.submit(self._output_handler, job_id, channel)
+            
+            if job['chatbot_stream']:
+                self.executor.submit(self._output_handler, job_id, channel)
 
     @staticmethod
     def _parse_command(text):
