@@ -15,7 +15,7 @@ config = {'api_listen_port': 8000,
 
 
 def main():
-    parser = ArgumentParser(description='multivac v%s' % (version))
+    parser = ArgumentParser(description='multivac v%s' % version)
     parser.add_argument('-c',
                         dest='config_path',
                         help='path to config file (default: %(default)s)',
