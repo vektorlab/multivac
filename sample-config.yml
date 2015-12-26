@@ -1,9 +1,22 @@
 #global config
 redis: "redis:6379"
+
+groups:
+  admins:
+    - user1
+    - user2
+  devs:
+    - user3
+    - user4
+
 actions:
   - name: echo
     cmd: /bin/echo
     confirm_required: True
+  - name: count
+    cmd: /bin/echo {1..10}
+    allow_groups:
+      - admins
 
 #slackbot config
 slack_token: 1234
