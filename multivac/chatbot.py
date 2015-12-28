@@ -1,6 +1,5 @@
 import abc
 import logging
-
 from time import sleep
 from concurrent.futures import ThreadPoolExecutor
 
@@ -9,19 +8,21 @@ from multivac.util import format_time
 
 log = logging.getLogger('multivac')
 
+
 class ChatBot(object):
     """
     Generic base class for chatbots. Subclasses must provide
     a reply method and a messages property generator
     """
+
     def __init__(self, redis_host, redis_port):
-        self.db  = JobsDB(redis_host, redis_port)
-        self.builtins = { 'confirm' : self._confirm,
-                          'cancel'  : self._cancel,
-                          'workers' : self._workers,
-                          'jobs'    : self._jobs,
-                          'logs'    : self._logs,
-                          'help'    : self._help }
+        self.db = JobsDB(redis_host, redis_port)
+        self.builtins = { 'help': self._help,
+                          'jobs': self._jobs,
+                          'logs': self._logs,
+                          'cancel': self._cancel,
+                          'confirm': self._confirm,
+                          'workers': self._workers }
         self.message_queue = []
 
         self.executor = ThreadPoolExecutor(max_workers=10)
@@ -68,7 +69,7 @@ class ChatBot(object):
             if job['status'] == 'pending':
                 self.reply('%s needs confirmation' % str(job_id), channel)
                 self.reply('EOF', channel)
-            
+
             if job['chatbot_stream'] != 'False':
                 self.executor.submit(self._output_handler, job_id, channel)
 
@@ -135,7 +136,7 @@ class ChatBot(object):
         if not job:
             return 'no such job id'
 
-        ok,result = self.db.cancel_job(arg)
+        ok, result = self.db.cancel_job(arg)
         if not ok:
             return result
 
@@ -178,7 +179,7 @@ class ChatBot(object):
     def _help(self, args):
         """ Show this help dialog """
         builtin_cmds = ['Builtin commands:']
-        for cmd,func in sorted(self.builtins.items()):
+        for cmd, func in sorted(self.builtins.items()):
             builtin_cmds.append('  [ %s ]%s' % (cmd, func.__doc__))
 
         action_cmds = ['Action commands:']
