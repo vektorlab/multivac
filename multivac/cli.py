@@ -9,9 +9,9 @@ log = logging.getLogger('multivac')
 
 subcommands = ['worker', 'slackbot', 'api', 'console']
 # defaults
-config = {'api_listen_port': 8000,
-          'slack_token': None,
-          'redis': '127.0.0.1:6379'}
+config = { 'slack_token': None,
+           'api_listen_port': 8000,
+           'redis': '127.0.0.1:6379' }
 
 
 def main():
