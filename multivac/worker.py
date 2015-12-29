@@ -19,6 +19,10 @@ log = logging.getLogger('multivac')
 
 pending_job_timeout = 300
 
+action_defaults = { 'allow_groups': 'all',
+                    'chatbot_stream': True,
+                    'confirm_required': False }
+
 class JobWorker(object):
     """
     Multivac worker process. Spawns jobs, streams job stdout/stderr,
@@ -86,16 +90,16 @@ class JobWorker(object):
     def _read_actions(self, actions):
         self.db.purge_actions()
         for a in actions:
-            action = { 'confirm_required': False,
-                       'chatbot_stream': True,
-                       'allow_groups': 'all' }
-            action.update(a)
 
-            if isinstance(action['allow_groups'], list): 
-                action['allow_groups'] = ','.join(action['allow_groups'])
+            new_action = deepcopy(action_defaults)
 
-            self.db.add_action(action)
-            log.info('loaded action %s' % (action['name']))
+            if isinstance(a['allow_groups'], list):
+                a['allow_groups'] = ','.join(a['allow_groups'])
+
+            new_action.update(a)
+
+            self.db.add_action(new_action)
+            log.info('loaded action %s' % (new_action['name']))
 
     def _get_name(self):
         """
