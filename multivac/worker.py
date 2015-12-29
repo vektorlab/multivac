@@ -91,15 +91,26 @@ class JobWorker(object):
         self.db.purge_actions()
         for a in actions:
 
+            if 'allow_groups' in a.keys():
+                a['allow_groups'] = self._read_action_groups(a['allow_groups'])
+
             new_action = deepcopy(action_defaults)
-
-            if isinstance(a['allow_groups'], list):
-                a['allow_groups'] = ','.join(a['allow_groups'])
-
             new_action.update(a)
 
             self.db.add_action(new_action)
             log.info('loaded action %s' % (new_action['name']))
+
+    def _read_action_groups(self, groups):
+        if not isinstance(groups, list):
+            log.warn('unable to parse allow_groups, defaulting to "all"')
+            return 'all'
+
+        defined_groups = self.db.get_groups().keys()
+        for g in groups:
+            if g not in defined_groups:
+                log.warn('no such user group defined: %s' % g)
+
+        return ','.join(groups)
 
     def _get_name(self):
         """
