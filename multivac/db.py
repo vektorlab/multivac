@@ -51,6 +51,9 @@ class JobsDB(object):
                      (action_name, initiator))
             return (False, 'Invalid user command')
 
+        if len(self.get_workers()) == 0:
+            return (False, 'No workers available!')
+
         job['id'] = str(uuid4().hex)
         job['args'] = args
         job['created'] = unix_time(datetime.utcnow())
@@ -283,8 +286,8 @@ class JobsDB(object):
         self.redis.expire(key, 15)
 
     def get_workers(self):
-        return [self.redis.hgetall(k) for k in
-                self.redis.keys(pattern=self._key('worker', '*'))]
+        return [ self.redis.hgetall(k) for k in \
+                 self.redis.keys(pattern=self._key('worker', '*')) ]
 
     #######
     # Keyname Methods
