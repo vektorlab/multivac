@@ -166,6 +166,7 @@ class JobWorker(object):
                 self.db.append_job_log(job_id, error)
                 log.debug('%s-STDOUT: %s' % (job_id, error))
 
+            #TODO: do final read of stdout/stderr streams before exiting
             # exit when job has been collected
             if job_id not in self.pids:
                 log.debug('Log handler stopped for job %s' % job_id)

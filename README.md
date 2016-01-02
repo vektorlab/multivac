@@ -1,7 +1,7 @@
 # Multivac
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/bcicen/multivac/master/logo.png" alt="Statsquid"/>
+  <img src="https://raw.githubusercontent.com/bcicen/multivac/master/logo.png" alt="multivac"/>
 </p>
 
 Extensible ChatOps framework with an integrated job queue, RESTful API, and built-in support for Slack.
