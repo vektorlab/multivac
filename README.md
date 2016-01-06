@@ -1,7 +1,7 @@
 # Multivac
 
 <p align="center">
-  <img width="500px" src="https://raw.githubusercontent.com/bcicen/multivac/master/logo.png" alt="multivac"/>
+  <img width="500px" src="https://raw.githubusercontent.com/vektorlab/multivac/master/logo.png" alt="multivac"/>
 </p>
 
 Extensible ChatOps framework with an integrated job queue, RESTful API, and built-in support for Slack.
@@ -11,7 +11,7 @@ Extensible ChatOps framework with an integrated job queue, RESTful API, and buil
 To get started quickly using Docker:
 - Clone the repo and create a copy of the sample config
 ```bash
-git clone https://github.com/bcicen/multivac.git
+git clone https://github.com/vektorlab/multivac.git
 cd multivac
 cp -v sample_config.yml config.yml
 ```
