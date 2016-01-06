@@ -1,7 +1,7 @@
 # Multivac
 
 <p align="center">
-  <img width="500px" src="https://raw.githubusercontent.com/vektorlab/multivac/master/logo.png" alt="multivac"/>
+  <img src="https://raw.githubusercontent.com/vektorlab/multivac/master/logo.png" alt="multivac"/>
 </p>
 
 Extensible ChatOps framework with an integrated job queue, RESTful API, and built-in support for Slack.
