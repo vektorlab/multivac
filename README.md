@@ -13,7 +13,7 @@ To get started quickly using Docker:
 ```bash
 git clone https://github.com/vektorlab/multivac.git
 cd multivac
-cp -v sample_config.yml config.yml
+cp -v sample-config.yml config.yml
 ```
 
 - Update config.yml with a Slack token created under "Bots" in the integration section of Slack
