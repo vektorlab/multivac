@@ -138,10 +138,12 @@ class JobWorker(object):
         else:
             cmdline = job['cmd']
 
+        print(cmdline)
         proc = subprocess.Popen(
             cmdline,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE)
+        print('end popne')
 
         self.pids[job['id']] = proc.pid
 

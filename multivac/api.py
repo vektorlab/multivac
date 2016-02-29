@@ -49,5 +49,5 @@ class MultivacApi(object):
 
     def start_server(self, listen_port=8000):
         print('Starting Multivac API v%s' % version)
-        http_server = WSGIServer(('', listen_port), self.app)
+        http_server = WSGIServer(('0.0.0.0', listen_port), self.app)
         http_server.serve_forever()

@@ -1,5 +1,4 @@
 import logging
-
 from slacksocket import SlackSocket
 
 from multivac.chatbot import ChatBot
@@ -9,16 +8,14 @@ log = logging.getLogger('multivac')
 
 class SlackBot(ChatBot):
     """
+    Slack ChatBot
     params:
      - slack_token(str):
     """
-
+    print('Starting Slackbot...')
     def __init__(self, slack_token, redis_host, redis_port):
-        print('Starting Slackbot')
-
         self.slacksocket = SlackSocket(slack_token, event_filters=['message'])
         self.me = self.slacksocket.user
-
         print('Connected to Slack as %s' % self.me)
 
         super().__init__(redis_host, redis_port)

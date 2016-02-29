@@ -10,6 +10,7 @@ from multivac.util import format_time
 
 
 class ConsoleBot(ChatBot):
+    """ Commandline ChatBot """
 
     def __init__(self, redis_host, redis_port):
         self._messages = []

@@ -20,7 +20,7 @@ cp -v sample-config.yml config.yml
 
 - Update docker-compose.yml with your config path:
 ```bash
-sed "s|/path/to|$(pwd)|g" docker-compose.yml
+sed -i "s|/path/to|$(pwd)|g" docker-compose.yml
 ```
 - And bring up the container stack:
 ```bash
