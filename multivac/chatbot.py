@@ -137,6 +137,7 @@ class ChatBot(object):
             return 'job not awaiting confirm'
 
         self.db.update_job(arg, 'status', 'ready')
+        return 'job confirmed'
 
     def _cancel(self, arg):
         """ Cancel a pending job """
