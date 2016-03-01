@@ -43,7 +43,7 @@ class JobsDB(object):
         job = self.get_action(action_name)
 
         if not job:
-            return (False, 'No such action')
+            return (False, 'no such action')
 
         #check that user has privilege for this command
         if not self.check_user(initiator, job['allow_groups'].split(',')):
@@ -139,8 +139,10 @@ class JobsDB(object):
             return (False, 'no such job id')
 
         if job['status'] == 'completed':
+            log.debug('fetching stored log for completed job')
             return self.get_stored_log(job_id, timestamp=timestamp)
         else:
+            log.debug('fetching logstream for running job')
             return self.get_logstream(job_id, timestamp=timestamp)
 
     def get_logstream(self, job_id, timestamp=True):

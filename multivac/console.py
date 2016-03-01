@@ -3,6 +3,7 @@ import sys
 import readline
 from time import sleep
 from termcolor import colored
+from threading import Thread
 
 from multivac.chatbot import ChatBot
 from multivac.version import version
@@ -16,7 +17,9 @@ class ConsoleBot(ChatBot):
         self._messages = []
         self._wait = False
 
-        super().__init__(redis_host, redis_port)
+        self.thread = Thread(target=super().__init__, args=(redis_host, redis_port))
+        self.thread.daemon = True
+        self.thread.start()
 
         self.init_readline()
         self.input_loop()
@@ -34,7 +37,7 @@ class ConsoleBot(ChatBot):
             self._wait = False
             return
         if isinstance(msg, list):
-            [self._output(l) for l in msg]
+            [ self._output(l) for l in msg ]
         else:
             self._output(msg)
 

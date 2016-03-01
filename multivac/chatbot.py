@@ -23,22 +23,30 @@ class ChatBot(object):
                           'cancel': self._cancel,
                           'confirm': self._confirm,
                           'workers': self._workers }
-        self.message_queue = []
 
-        self.executor = ThreadPoolExecutor(max_workers=10)
-        self.executor.submit(self._message_worker)
+        self.executor = ThreadPoolExecutor(max_workers=20)
+        log.debug('set max chatbot workers: %s' % self.executor._max_workers)
+
+        self._message_worker()
 
     @abc.abstractmethod
     def reply(self, text, channel):
+        """
+        Method to send a message to a specified channel
+        """
         raise NotImplementedError
 
     @abc.abstractproperty
     def messages(self):
         """
-        Generator yielding message tuples
-        in the form (text,user,channel)
+        Generator yielding message tuples in the form (text,user,channel)
         """
         raise NotImplementedError
+
+    def _print_queue(self):
+        while True:
+            print('work queue: %s' % self.executor._work_queue.qsize())
+            sleep(1)
 
     def _message_worker(self):
         for msg in self.messages:
@@ -73,11 +81,11 @@ class ChatBot(object):
             if job['chatbot_stream'] != 'False':
                 self.executor.submit(self._output_handler, job_id, channel)
 
+        return
+
     @staticmethod
     def _parse_command(text):
-        """
-        Parse message text; return command and arguments
-        """
+        """ Parse message text; return command and arguments """
         words = text.split(' ')
         cmd = words.pop(0)
         args = ' '.join(words)
@@ -89,7 +97,7 @@ class ChatBot(object):
         Worker to send the output of a given job_id to a given channel
         params:
          - stream(bool): Toggle streaming output as it comes in
-           vs posting when a job finishes. Default False.
+           vs posting when a job finishes. Default True.
         """
         active = False
         prefix = '[%s]' % job_id[-8:]

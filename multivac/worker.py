@@ -143,7 +143,6 @@ class JobWorker(object):
             cmdline,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE)
-        print('end popne')
 
         self.pids[job['id']] = proc.pid
 

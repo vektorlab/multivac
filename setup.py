@@ -2,7 +2,7 @@ from setuptools import setup
 
 exec(open('multivac/version.py').read())
 
-requirements = [ 'slacksocket>=0.6.0',
+requirements = [ 'slacksocket>=0.7.0',
                  'Flask>=0.10.1',
                  'Flask-RESTful>=0.3.2',
                  'gevent>=1.1b1',
