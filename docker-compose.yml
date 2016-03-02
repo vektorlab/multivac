@@ -1,5 +1,5 @@
 worker:
-  image: multivac:latest
+  image: vektorlab/multivac:latest
   command: "worker"
   links:
     - redis:redis
@@ -7,7 +7,7 @@ worker:
     - /path/to/config.yml:/etc/multivac.yml
 
 api:
-  image: multivac:latest
+  image: mvektorlab/ultivac:latest
   command: "api"
   links:
     - redis:redis
@@ -17,7 +17,7 @@ api:
     - "8000:8000"
 
 slackbot:
-  image: multivac:latest
+  image: mvektorlab/ultivac:latest
   command: "slackbot"
   links:
     - redis:redis

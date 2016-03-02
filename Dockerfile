@@ -1,13 +1,14 @@
 #multivac
 
-FROM python:3
-MAINTAINER Bradley Cicenas <bradley@vektor.nyc>
+FROM vektorlab/python:3
 
 ENV CONFIG_PATH /config.yml
 ENV PYTHONUNBUFFERED true
 
 COPY requirements.txt /
-RUN pip install -r requirements.txt
+RUN apk --no-cache add build-base python3-dev && \
+    pip install -r requirements.txt && \
+    apk del build-base python3-dev
 
 COPY . /app
 WORKDIR /app
