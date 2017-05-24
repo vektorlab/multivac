@@ -24,7 +24,7 @@ setup(
     include_package_data=True,
     license='http://opensource.org/licenses/MIT',
     classifiers=(
-        'License :: OSI Approved :: MIT License ',
+        'License :: OSI Approved :: MIT License',
         'Natural Language :: English',
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
