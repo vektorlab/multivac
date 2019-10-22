@@ -1,5 +1,5 @@
 slacksocket>=0.7.0
-Flask==0.10.1
+Flask==1.0
 Flask-RESTful==0.3.2
 gevent==1.1b1
 redis==2.10.3
